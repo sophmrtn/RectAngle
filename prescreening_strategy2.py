@@ -138,11 +138,11 @@ with torch.no_grad():
 #Obtaining plots of the histogram 
 
 #Obtain all unique FP scores for screen, no screen method 
-unique_fp_screen = [np.unique(fp_vals) for fp_vals in all_fp_screen if len(all_fp_screen) > 0]
+unique_fp_screen = [np.unique(fp_vals) for fp_vals in all_fp_screen if len(fp_vals) > 0]
 unique_fp_screen = np.concatenate(unique_fp_screen, axis = 0)
 
 #Obtain all unique FP scores for screen, no screen method 
-unique_fp_noscreen = [np.unique(fp_vals) for fp_vals in all_fp_screen if len(all_fp_noscreen) > 0]
+unique_fp_noscreen = [np.unique(fp_vals) for fp_vals in all_fp_screen if len(fp_vals) > 0]
 unique_fp_noscreen = np.concatenate(unique_fp_noscreen, axis = 0)
 
 from matplotlib import pyplot as plt
