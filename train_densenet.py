@@ -136,7 +136,7 @@ with open('classification_loss_file2.csv', 'w') as loss:
       ''')
 
 optimiser = torch.optim.Adam(DenseNet_model.parameters(), lr=1e-4)
-loss_fn = torch.nn.BCEWithLogitsLoss(reduction='mean', pos_weight = torch.tensor(0.25))
+loss_fn = torch.nn.BCEWithLogitsLoss(reduction='mean'), pos_weight = torch.tensor(0.25))
 
 for epoch in range(no_epochs):
 
@@ -188,7 +188,7 @@ for epoch in range(no_epochs):
     if avg_loss_val[epoch] < best_loss: 
         print('New best model')
         best_loss = avg_loss_val[epoch]
-        torch.save(DenseNet_model, 'classification_model_weighted_loss')
+        torch.save(DenseNet_model, 'resnet_model')
 
     ### SAVING LOSS VALUES
     with open('classification_loss_file2.csv', 'a') as loss:
