@@ -155,12 +155,12 @@ if cuda_available:
 
 
 ### Loading in data ### 
-train_data = h5py.File('/raid/candi/Iani/MRes_project/dataset/dataset_zip/train.h5', 'r')
+train_data = h5py.File('/raid/candi/Iani/MRes_project/dataset/train.h5', 'r')
 #train_data = h5py.File('/Users/iani/Documents/Reg2Seg/dataset/train.h5')
 train_dataset = ClassifyDataLoader(train_data)
 train_DL = torch.utils.data.DataLoader(train_dataset, batch_size = 8, shuffle = True)
 
-val_data = h5py.File('/raid/candi/Iani/MRes_project/dataset/dataset_zip/val.h5', 'r')
+val_data = h5py.File('/raid/candi/Iani/MRes_project/dataset/val.h5', 'r')
 #val_data = h5py.File('/Users/iani/Documents/Reg2Seg/dataset/val.h5')
 val_dataset = ClassifyDataLoader(val_data)
 val_DL = torch.utils.data.DataLoader(val_dataset, batch_size = 8, shuffle = True)
