@@ -91,7 +91,7 @@ class DenseNet(torch.nn.Module):
 
 def MakeDenseNet(freeze_weights=True, pretrain=True):
   
-  cnn = models.resnet101(pretrained=pretrain)
+  cnn = models.densenet161(pretrained=pretrain)
 
   if freeze_weights:
     for param in cnn.parameters():
