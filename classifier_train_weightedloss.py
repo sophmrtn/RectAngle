@@ -20,7 +20,7 @@ from torch.utils.data import DataLoader, random_split, ConcatDataset
 from torchvision.transforms import RandomAffine
 import numpy as np
 
-
+cuda = torch.device('cuda:2')
 
 class Affine(object):
   """ Affine augmentation of image. Wrapper for torchvision RandomAffine.
