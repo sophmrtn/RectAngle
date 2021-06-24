@@ -19,10 +19,43 @@ from os import path, makedirs
 from datetime import date
 import matplotlib.pyplot as plt
 from torch.utils.data import DataLoader, random_split, ConcatDataset
+from torchvision.transforms import RandomAffine
 import numpy as np
-from scipy.ndimage import laplace
-import tensorflow as tf
 
+class Affine(object):
+  """ Affine augmentation of image. Wrapper for torchvision RandomAffine.
+  Input arguments:
+    image : Torch Tensor [B,C,H,W], dtype = int
+    prob : int, default = 0.3
+           Probability of augmentation occuring at each pass.
+    degrees : int, default = 5
+              Range of possible rotation (-degrees, +degrees). Set to None for
+              no rotation.
+    translate : float, default = 0.1
+                Range of possible translation. Set to None for no translation.
+    scale : tuple, default = (0.9, 1.1)
+            Range of possible scaling. Set to None for no scaling.
+    shear : int, default = 5
+            Range of possible shear rotation (-shear, +shear). Set to None for
+            no shear.
+  """
+  def __init__(self, prob=0.3,\
+    degrees=5, translate=0.1,
+    scale=(0.9,1.1), shear=5):
+    super().__init__() 
+    self.prob = prob
+    self.degrees = degrees
+    self.translate = translate
+    self.scale = scale
+    self.shear = shear
+
+  def __call__(self, image):
+    rand_ = random.uniform(0,1)
+    if rand_ < self.prob:
+      RandAffine_ = RandomAffine(degrees=self.degrees, translate=(self.translate,self.translate),
+                                scale=self.scale, shear=self.shear)
+      image = RandAffine_(image)
+    return image
 
 class ClassifyDataLoader(torch.utils.data.Dataset):
 
@@ -101,6 +134,12 @@ def MakeDenseNet(freeze_weights=True, pretrain=True):
 
   return DenseNet(cnn)
 
+def accuracy_score(predicted, target): 
+
+    correct = (torch.round(predicted) == target.cpu()).sum().item()
+
+    return correct / predicted.size(0)
+
 os.environ["CUDA_VISIBLE_DEVICES"]="0"
 cuda_available = torch.cuda.is_available()
 
@@ -109,20 +148,14 @@ DenseNet_model = MakeDenseNet(freeze_weights= False, pretrain= True)
 if cuda_available:
     DenseNet_model.cuda()
 
-#train_data = h5py.File('/Users/iani/Documents/Segmentation_project/in4it/dataset/train.h5', 'r')
+#Loading in data
 train_data = h5py.File('/raid/candi/Iani/MRes_project/dataset/dataset_zip/train.h5', 'r')
 train_dataset = ClassifyDataLoader(train_data)
-train_DL = torch.utils.data.DataLoader(train_dataset, batch_size = 8)
+train_DL = torch.utils.data.DataLoader(train_dataset, batch_size = 32)
 
 val_data = h5py.File('/raid/candi/Iani/MRes_project/dataset/dataset_zip/val.h5', 'r')
 val_dataset = ClassifyDataLoader(val_data)
 val_DL = torch.utils.data.DataLoader(val_dataset, batch_size = 8)
-
-def accuracy_score(predicted, target): 
-
-    correct = (torch.round(predicted) == target.cpu()).sum().item()
-
-    return correct / predicted.size(0)
 
 no_epochs = 200
 avg_loss = np.zeros(no_epochs,)
@@ -138,11 +171,11 @@ with open('classification_loss_resnet.csv', 'w') as loss:
       ''')
 
 optimiser = torch.optim.Adam(DenseNet_model.parameters(), lr=1e-4)
-loss_fn = torch.nn.BCEWithLogitsLoss(reduction='mean')#, pos_weight = torch.tensor(0.25))
+loss_fn = torch.nn.BCE(reduction='mean')#, pos_weight = torch.tensor(0.25))
 
 for epoch in range(no_epochs):
 
-    #Restart loss vals for every epoch #
+    #Restart loss vals for every epoch 
     all_loss_train = [] 
     all_loss_val = [] 
     all_accuracy = [] 
@@ -196,3 +229,7 @@ for epoch in range(no_epochs):
     with open('classification_loss_resnet.csv', 'a') as loss:
         all_vals =  np.concatenate([np.array(epoch).reshape(1,), avg_loss[epoch].reshape(1,), avg_loss_val[epoch].reshape(1,), avg_accuracy_val[epoch].reshape(1,)], axis = 0)
         np.savetxt(loss, np.reshape(all_vals, [1,-1]), '%s', delimiter =",")
+
+
+
+  
