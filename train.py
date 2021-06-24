@@ -131,8 +131,10 @@ trainer = rect.utils.train.Trainer(model, ensemble=ensemble, outdir=args.odir,
                                     nb_epochs=int(args.epochs))
 
 if args.val:
-    trainer.train(train_data, val_data, train_pre=[rect.utils.transforms.z_score(), rect.utils.transforms.Flip(), rect.utils.transforms.Affine(), rect.utils.transforms.SpeckleNoise()], 
+    trainer.train(train_data, val_data, train_pre=[rect.utils.transforms.z_score(), rect.utils.transforms.Flip()], 
                     val_pre=[rect.utils.transforms.z_score()], train_batch=int(args.batch))
 else:
-    trainer.train(train_data, train_pre=[rect.utils.transforms.z_score(), rect.utils.transforms.Flip(), rect.utils.transforms.Affine(), rect.utils.transforms.SpeckleNoise()], 
+    trainer.train(train_data, train_pre=[rect.utils.transforms.z_score()], 
                     val_pre=[rect.utils.transforms.z_score()], train_batch=int(args.batch))
+
+#rect.utils.transforms.Flip(), rect.utils.transforms.Affine(), rect.utils.transforms.SpeckleNoise()
