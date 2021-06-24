@@ -1,6 +1,7 @@
 import h5py
 import numpy as np
 import matplotlib.pyplot as plt
+import os 
 os.environ["CUDA_VISIBLE_DEVICES"] = "2"
 
 import torch 
@@ -18,7 +19,7 @@ import matplotlib.pyplot as plt
 from torch.utils.data import DataLoader, random_split, ConcatDataset
 from torchvision.transforms import RandomAffine
 import numpy as np
-import os 
+
 
 
 class Affine(object):
