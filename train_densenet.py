@@ -130,13 +130,13 @@ avg_accuracy_val = np.zeros(no_epochs,)
 best_loss = np.inf
 
 ### TRAINING AND VALIDATION FOR N NO OF EPOCHS ###
-with open('classification_loss_file2.csv', 'w') as loss:
+with open('classification_loss_resnet.csv', 'w') as loss:
     loss.write('''\
       Epoch, train_loss, val_loss, val_accuracy
       ''')
 
 optimiser = torch.optim.Adam(DenseNet_model.parameters(), lr=1e-4)
-loss_fn = torch.nn.BCEWithLogitsLoss(reduction='mean'), pos_weight = torch.tensor(0.25))
+loss_fn = torch.nn.BCEWithLogitsLoss(reduction='mean')#, pos_weight = torch.tensor(0.25))
 
 for epoch in range(no_epochs):
 
@@ -191,6 +191,6 @@ for epoch in range(no_epochs):
         torch.save(DenseNet_model, 'resnet_model')
 
     ### SAVING LOSS VALUES
-    with open('classification_loss_file2.csv', 'a') as loss:
+    with open('classification_loss_resnet.csv', 'a') as loss:
         all_vals =  np.concatenate([np.array(epoch).reshape(1,), avg_loss[epoch].reshape(1,), avg_loss_val[epoch].reshape(1,), avg_accuracy_val[epoch].reshape(1,)], axis = 0)
         np.savetxt(loss, np.reshape(all_vals, [1,-1]), '%s', delimiter =",")
