@@ -48,7 +48,7 @@ use_cuda = torch.cuda.is_available()
 ### Loading ensemble segmentation network ### 
 num_ensemble = 5 
 path_str = '/Users/iani/Documents/Segmentation_project/ensemble/'
-latest_model = ['10.pth', '5.pth', '5.pth', '15.pth', '15.pth'] #Checked manually 
+latest_model = ['13.pth', '4.pth', '30.pth', '28.pth', '28.pth'] #Checked manually 
 model_paths = [os.path.join(path_str, 'model_'+ str(idx), latest_model[idx]) 
 for idx in range(num_ensemble)]
 
