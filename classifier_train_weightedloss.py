@@ -172,8 +172,8 @@ avg_accuracy_val = np.zeros(no_epochs,)
 best_loss = np.inf
 
 #Saving file names
-loss_log_file = 'classification_loss_dense_weighted'
-saved_model_file = 'dense_weighted' #Name of saved moel 
+loss_log_file = 'classification_loss_dense_weighted_2'
+saved_model_file = 'dense_weighted_2' #Name of saved moel 
 
 ### TRAINING AND VALIDATION FOR N NO OF EPOCHS ###
 with open(loss_log_file, 'w') as loss:
