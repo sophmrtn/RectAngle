@@ -13,6 +13,42 @@ from datetime import date
 import matplotlib.pyplot as plt
 from torch.utils.data import DataLoader
 import numpy as np
+from torchvision.transforms import RandomAffine
+
+class Affine(object):
+  """ Affine augmentation of image. Wrapper for torchvision RandomAffine.
+  Input arguments:
+    image : Torch Tensor [B,C,H,W], dtype = int
+    prob : int, default = 0.3
+           Probability of augmentation occuring at each pass.
+    degrees : int, default = 5
+              Range of possible rotation (-degrees, +degrees). Set to None for
+              no rotation.
+    translate : float, default = 0.1
+                Range of possible translation. Set to None for no translation.
+    scale : tuple, default = (0.9, 1.1)
+            Range of possible scaling. Set to None for no scaling.
+    shear : int, default = 5
+            Range of possible shear rotation (-shear, +shear). Set to None for
+            no shear.
+  """
+  def __init__(self, prob=0.3,\
+    degrees=5, translate=0.1,
+    scale=(0.9,1.1), shear=5):
+    super().__init__() 
+    self.prob = prob
+    self.degrees = degrees
+    self.translate = translate
+    self.scale = scale
+    self.shear = shear
+
+  def __call__(self, image):
+    rand_ = random.uniform(0,1)
+    if rand_ < self.prob:
+      RandAffine_ = RandomAffine(degrees=self.degrees, translate=(self.translate,self.translate),
+                                scale=self.scale, shear=self.shear)
+      image = RandAffine_(image)
+    return image
 
 class ClassifyDataLoader(torch.utils.data.Dataset):
 
@@ -88,7 +124,7 @@ def MakeResNet(freeze_weights=True, pretrain=True):
       param.requires_grad=False
   return ResNet(cnn)
 
-os.environ["CUDA_VISIBLE_DEVICES"]="0"
+os.environ["CUDA_VISIBLE_DEVICES"]="1"
 cuda_available = torch.cuda.is_available()
 
 ResNet_model = MakeResNet(freeze_weights= False, pretrain= True)
@@ -105,11 +141,25 @@ val_data = h5py.File('/raid/candi/Iani/MRes_project/dataset/dataset_zip/val.h5',
 val_dataset = ClassifyDataLoader(val_data)
 val_DL = torch.utils.data.DataLoader(val_dataset, batch_size = 8)
 
+def accuracy_score_nosig(predicted, target): 
+  """
+  Accuracy score for model with final layer of sigmoid so no need to apply again 
+  """
+  #Apply sigmoid 
+  correct = (torch.round(predicted) == target.cpu()).sum().item()
+
+  return correct / predicted.size(0)
+
 def accuracy_score(predicted, target): 
 
-    correct = (torch.round(predicted) == target.cpu()).sum().item()
+  """
+  Accuracy for classifier model with no final sigmoid layer 
+  """
+  predicted = torch.sigmoid(predicted)
+  predicted = predicted > 0.5
+  correct = (torch.round(predicted) == target.cpu()).sum().item()
 
-    return correct / predicted.size(0)
+  return correct / predicted.size(0)
 
 no_epochs = 200
 avg_loss = np.zeros(no_epochs,)
@@ -117,6 +167,10 @@ avg_loss_val = np.zeros(no_epochs,)
 avg_accuracy_val = np.zeros(no_epochs,)
 
 best_loss = np.inf
+
+#Saving file names
+loss_log_file = 'classification_loss_resnet.csv'
+saved_model_file = 'resnet' #Name of saved moel 
 
 ### TRAINING AND VALIDATION FOR N NO OF EPOCHS ###
 with open('classification_loss_resnet.csv', 'w') as loss:
@@ -126,6 +180,7 @@ with open('classification_loss_resnet.csv', 'w') as loss:
 
 optimiser = torch.optim.Adam(ResNet_model.parameters(), lr=1e-4)
 loss_fn = torch.nn.BCEWithLogitsLoss(reduction='mean')#, pos_weight = torch.tensor(0.25))
+Apply_transform = Affine(prob = 0.3, degrees = 5, translate= 0.1, scale = (0.9,1.1), shear = 5) 
 
 for epoch in range(no_epochs):
 
@@ -141,6 +196,9 @@ for epoch in range(no_epochs):
         if cuda_available:
             image, label = image.cuda(), label.cuda()
         
+        #Apply data augmentation 
+        image = Apply_transform(image)
+
         #Update weights of NN
         optimiser.zero_grad()
         output = ResNet_model(image)
@@ -177,7 +235,7 @@ for epoch in range(no_epochs):
     if avg_loss_val[epoch] < best_loss: 
         print('New best model')
         best_loss = avg_loss_val[epoch]
-        torch.save(ResNet_model, 'resnet_model')
+        torch.save(ResNet_model, saved_model_file)
 
     ### SAVING LOSS VALUES
     with open('classification_loss_resnet.csv', 'a') as loss:
