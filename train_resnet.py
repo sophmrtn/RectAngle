@@ -14,6 +14,41 @@ import matplotlib.pyplot as plt
 from torch.utils.data import DataLoader
 import numpy as np
 
+class Affine(object):
+  """ Affine augmentation of image. Wrapper for torchvision RandomAffine.
+  Input arguments:
+    image : Torch Tensor [B,C,H,W], dtype = int
+    prob : int, default = 0.3
+           Probability of augmentation occuring at each pass.
+    degrees : int, default = 5
+              Range of possible rotation (-degrees, +degrees). Set to None for
+              no rotation.
+    translate : float, default = 0.1
+                Range of possible translation. Set to None for no translation.
+    scale : tuple, default = (0.9, 1.1)
+            Range of possible scaling. Set to None for no scaling.
+    shear : int, default = 5
+            Range of possible shear rotation (-shear, +shear). Set to None for
+            no shear.
+  """
+  def __init__(self, prob=0.3,\
+    degrees=5, translate=0.1,
+    scale=(0.9,1.1), shear=5):
+    super().__init__() 
+    self.prob = prob
+    self.degrees = degrees
+    self.translate = translate
+    self.scale = scale
+    self.shear = shear
+
+  def __call__(self, image):
+    rand_ = random.uniform(0,1)
+    if rand_ < self.prob:
+      RandAffine_ = RandomAffine(degrees=self.degrees, translate=(self.translate,self.translate),
+                                scale=self.scale, shear=self.shear)
+      image = RandAffine_(image)
+    return image
+
 class ClassifyDataLoader(torch.utils.data.Dataset):
 
   def __init__(self, file, keys=None):
