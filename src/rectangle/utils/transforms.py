@@ -29,12 +29,9 @@ class z_score(object):
     super().__init__()
 
   def __call__(self, image):
-    batch_ = image.shape[0]
-    for batch_iter_ in range(batch_):
-      image[batch_iter_,...] = (image[batch_iter_,...] - \
-                                torch.mean(image[batch_iter_,...]) / \
-                                torch.std(image[batch_iter_,...]))
-    return image
+    means = image.mean(dim=(1,2,3), keepdim=True)
+    stds = image.std(dim=(1,2,3), keepdim=True)
+    return (image - means.expand(image.size())) / stds.expand(image.size())
 
 
 # def z_score(image):

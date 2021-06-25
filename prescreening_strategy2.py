@@ -10,16 +10,10 @@ from rectangle.model.networks import DenseNet as DenseNet
 from torch.utils.data import DataLoader 
 
 
-
 def standardise(image):
-
-    batch_ = image.shape[0]
-    for batch_iter_ in range(batch_):
-        image[batch_iter_,...] = (image[batch_iter_,...] - \
-                                torch.mean(image[batch_iter_,...]) / \
-                                torch.std(image[batch_iter_,...]))
-
-    return image
+    means = image.mean(dim=(1,2,3), keepdim=True)
+    stds = image.std(dim=(1,2,3), keepdim=True)
+    return (image - means.expand(image.size())) / stds.expand(image.size())
 
 def dice_score2(y_pred, y_true, eps=1e-8):
     '''
@@ -48,7 +42,7 @@ use_cuda = torch.cuda.is_available()
 
 ### Loading ensemble segmentation network ### 
 num_ensemble = 5 
-path_str = '/Users/iani/Documents/Segmentation_project/ensemble/'
+path_str = '.\dataset\ensemble'
 latest_model = ['13.pth', '4.pth', '30.pth', '28.pth', '28.pth'] #Checked manually 
 model_paths = [os.path.join(path_str, 'model_'+ str(idx), latest_model[idx]) 
 for idx in range(num_ensemble)]
@@ -63,10 +57,12 @@ for n, m in enumerate(seg_models):
 
 ### Loading classifier network ### 
 #class_model = torch.load("/Users/iani/Documents/Segmentation_project/classification_model", map_location = device)
-class_model = torch.load("/Users/iani/Documents/Segmentation_project/classifiers/dense_aug", map_location = torch.device('cpu'))
+class_model = torch.load("./dataset/classifiers/dense_aug", map_location = torch.device('cpu'))
+if use_cuda: 
+        class_model = torch.load("./dataset/classifiers/dense_aug", map_location = torch.device('cuda'))
 
 ### Inference ###
-test_file = h5py.File('/Users/iani/Documents/Reg2Seg/dataset/test.h5', 'r')
+test_file = h5py.File('./dataset/test.h5', 'r')
 test_DS = rect.utils.io.H5DataLoader(test_file)
 test_DL = DataLoader(test_DS, batch_size = 8, shuffle = False)
 
@@ -115,7 +111,8 @@ with torch.no_grad():
         #all_dice_noscreen.append(dice_noscreen)
 
         ### Pre-screened results only ### 
-        prostate_idx = np.where(class_preds > classification_threshold)[0]
+
+        prostate_idx = np.where(class_preds.cpu() > classification_threshold)[0]
 
         #dice_screened = dice_score(combined_predictions[prostate_idx, :,:], labels_test[prostate_idx, :,:])
         
