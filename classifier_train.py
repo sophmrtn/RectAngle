@@ -1,16 +1,11 @@
-import os
-import random
-from numpy.lib.shape_base import split
-import requests
-
 import h5py
 import numpy as np
 import matplotlib.pyplot as plt
 import torch 
 from torchvision import transforms, models
 from torchvision.transforms import Normalize
-#from data_loader import ClassifyDataLoader 
 
+import random 
 import torch
 from torch import nn
 from torch.optim import Adam
@@ -21,6 +16,8 @@ import matplotlib.pyplot as plt
 from torch.utils.data import DataLoader, random_split, ConcatDataset
 from torchvision.transforms import RandomAffine
 import numpy as np
+import os 
+
 
 class Affine(object):
   """ Affine augmentation of image. Wrapper for torchvision RandomAffine.
@@ -140,38 +137,51 @@ def accuracy_score(predicted, target):
 
     return correct / predicted.size(0)
 
+
+#Initialising CUDA environment
 os.environ["CUDA_VISIBLE_DEVICES"]="0"
 cuda_available = torch.cuda.is_available()
 
+#Initialise model 
 DenseNet_model = MakeDenseNet(freeze_weights= False, pretrain= True)
 
 if cuda_available:
     DenseNet_model.cuda()
 
-#Loading in data
+
+### Loading in data ### 
 train_data = h5py.File('/raid/candi/Iani/MRes_project/dataset/dataset_zip/train.h5', 'r')
+#train_data = h5py.File('/Users/iani/Documents/Reg2Seg/dataset/train.h5')
 train_dataset = ClassifyDataLoader(train_data)
-train_DL = torch.utils.data.DataLoader(train_dataset, batch_size = 32)
+train_DL = torch.utils.data.DataLoader(train_dataset, batch_size = 16, shuffle = True)
 
 val_data = h5py.File('/raid/candi/Iani/MRes_project/dataset/dataset_zip/val.h5', 'r')
+#val_data = h5py.File('/Users/iani/Documents/Reg2Seg/dataset/val.h5')
 val_dataset = ClassifyDataLoader(val_data)
-val_DL = torch.utils.data.DataLoader(val_dataset, batch_size = 8)
+val_DL = torch.utils.data.DataLoader(val_dataset, batch_size = 8, shuffle = True)
 
 no_epochs = 200
 avg_loss = np.zeros(no_epochs,)
 avg_loss_val = np.zeros(no_epochs,)
 avg_accuracy_val = np.zeros(no_epochs,)
-
 best_loss = np.inf
 
+#Saving file names
+loss_log_file = 'classification_loss_dense_aug'
+saved_model_file = 'dense_aug' #Name of saved moel 
+
 ### TRAINING AND VALIDATION FOR N NO OF EPOCHS ###
-with open('classification_loss_resnet.csv', 'w') as loss:
+with open(loss_log_file, 'w') as loss:
     loss.write('''\
       Epoch, train_loss, val_loss, val_accuracy
       ''')
 
+#Setting up parameters
 optimiser = torch.optim.Adam(DenseNet_model.parameters(), lr=1e-4)
-loss_fn = torch.nn.BCE(reduction='mean')#, pos_weight = torch.tensor(0.25))
+loss_fn = torch.nn.BCELoss(reduction='mean') #, pos_weight = torch.tensor(0.25))
+Apply_transform = Affine(prob = 0.3, degrees = 5, translate= 0.1, scale = (0.9,1.1), shear = 5)
+
+#Training loop 
 
 for epoch in range(no_epochs):
 
@@ -182,11 +192,15 @@ for epoch in range(no_epochs):
 
     ### TRAINING ####
     DenseNet_model.train()
+    
     for idx, (image, label) in enumerate(train_DL):
 
         if cuda_available:
             image, label = image.cuda(), label.cuda()
-        
+
+        #Apply data augmentation
+        image= Apply_transform(image)
+
         #Update weights of NN
         optimiser.zero_grad()
         output = DenseNet_model(image)
@@ -200,7 +214,7 @@ for epoch in range(no_epochs):
     avg_loss[epoch] = np.mean(all_loss_train)
     print('Epoch %d, Average loss: %.3f' % (epoch, avg_loss[epoch]))
 
-    ### VALIDATION ###
+    ### VALIDATION : validate during every epoch ###
     DenseNet_model.eval()
     for idx, (image, label) in enumerate(val_DL):
         if cuda_available:
@@ -223,13 +237,32 @@ for epoch in range(no_epochs):
     if avg_loss_val[epoch] < best_loss: 
         print('New best model')
         best_loss = avg_loss_val[epoch]
-        torch.save(DenseNet_model, 'resnet_model')
+        torch.save(DenseNet_model, saved_model_file)
 
     ### SAVING LOSS VALUES
-    with open('classification_loss_resnet.csv', 'a') as loss:
+    with open(loss_log_file, 'a') as loss:
         all_vals =  np.concatenate([np.array(epoch).reshape(1,), avg_loss[epoch].reshape(1,), avg_loss_val[epoch].reshape(1,), avg_accuracy_val[epoch].reshape(1,)], axis = 0)
         np.savetxt(loss, np.reshape(all_vals, [1,-1]), '%s', delimiter =",")
 
 
+""" Debugging functions
 
-  
+for idx, (image, label) in enumerate(train_DL):
+
+    if cuda_available:
+        image, label = image.cuda(), label.cuda()
+    
+    if idx != 0: 
+        break
+    else: 
+        image_augmented = Apply_transform(image)
+        
+for i in range(5):
+    fig, axes = plt.subplots(1,2)
+    axes[0].imshow(torch.squeeze(image[i,:,:,:]))
+    axes[1].imshow(torch.squeeze(image_augmented[i,:,:,:]))
+
+plt.show()
+
+
+"""

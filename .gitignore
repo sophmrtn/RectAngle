@@ -3,6 +3,10 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# dataset
+dataset/
+classification_loss_resnet.csv
+
 # C extensions
 *.so
 
