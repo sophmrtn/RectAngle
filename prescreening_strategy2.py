@@ -8,7 +8,8 @@ import os
 from rectangle.model.networks import DenseNet as DenseNet 
 
 from torch.utils.data import DataLoader 
-import tensorflow as tf 
+
+
 
 def standardise(image):
 
@@ -61,17 +62,16 @@ for n, m in enumerate(seg_models):
     m.load_state_dict(torch.load(model_paths[n], map_location= device))
 
 ### Loading classifier network ### 
-class_model = torch.load("/Users/iani/Documents/Segmentation_project/classification_model", map_location = device)
+#class_model = torch.load("/Users/iani/Documents/Segmentation_project/classification_model", map_location = device)
+class_model = torch.load("/Users/iani/Documents/Segmentation_project/classifiers/dense_aug", map_location = torch.device('cpu'))
 
 ### Inference ###
-
 test_file = h5py.File('/Users/iani/Documents/Reg2Seg/dataset/test.h5', 'r')
 test_DS = rect.utils.io.H5DataLoader(test_file)
 test_DL = DataLoader(test_DS, batch_size = 8, shuffle = False)
 
 segmentation_threshold = 0.5 
 classification_threshold = 0.5 
-
 
 all_dice_screen = []
 all_dice_noscreen = []
@@ -90,24 +90,19 @@ with torch.no_grad():
         positive_frames = [(1 in label) for label in labels_test]
         negative_frames = [not(1 in label) for label in labels_test]
 
-        #False positives negative frames
-
-        #Dice score : positive frames 
-
         #Obtain prediction for classifier 
-        class_preds = class_model(images_test)
-
+        class_preds = class_model(images_test) #If using densenet 
+        
         #Normalise images for segmentation network 
         norm_images_test = standardise(images_test)
 
-        #Obtain predictions for each ensemble model and combine them
         combined_predictions = torch.zeros_like(labels_test, dtype = float)
-        majority = len(seg_models) - 1 
+        majority = np.int(np.round(len(seg_models)/2) + 1) #Majority vote number eg (num_ensembles / 2) + 1
 
+        #Obtain segmentation predictions 
         for model_ in seg_models:
-            #Obtain predictions
             model_.eval()
-            seg_predictions = torch.tensor(model_(norm_images_test) > 0.5, dtype = float)
+            seg_predictions = torch.tensor(model_(norm_images_test) > segmentation_threshold, dtype = float)
             combined_predictions += seg_predictions
 
         #All segmentation results - only on positive frames 
@@ -116,12 +111,12 @@ with torch.no_grad():
         all_dice_noscreen.append(dice_noscreen)
         all_fp_noscreen.append(fp_noscreen)
 
-
         #dice_noscreen = dice_score(combined_predictions, labels_test)
         #all_dice_noscreen.append(dice_noscreen)
 
-        #Pre-screened results only 
-        prostate_idx = np.where(class_preds == 1)[0]
+        ### Pre-screened results only ### 
+        prostate_idx = np.where(class_preds > classification_threshold)[0]
+
         #dice_screened = dice_score(combined_predictions[prostate_idx, :,:], labels_test[prostate_idx, :,:])
         
         positive_frames_screened = [positive_frames[i] for i in prostate_idx]
