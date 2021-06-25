@@ -13,6 +13,7 @@ from datetime import date
 import matplotlib.pyplot as plt
 from torch.utils.data import DataLoader
 import numpy as np
+from torchvision.transforms import RandomAffine
 
 class Affine(object):
   """ Affine augmentation of image. Wrapper for torchvision RandomAffine.
