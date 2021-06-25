@@ -230,7 +230,7 @@ for epoch in range(no_epochs):
         with torch.no_grad():
             output = DenseNet_model(image)
             loss = loss_fn(output,label.float())
-            accuracy = accuracy_score(torch.nn.Sigmoid(output, requires_grad= False).cpu(), label.cpu())
+            accuracy = accuracy_score(torch.nn.Sigmoid(output).cpu(), label.cpu())
                 
         all_loss_val.append(loss.item())
         all_accuracy.append(accuracy)
