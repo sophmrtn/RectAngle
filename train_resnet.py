@@ -115,7 +115,7 @@ class ResNet(torch.nn.Module):
     x = self.network(x)
     return x
 
-def MakeResNet(freeze_weights=True, pretrain=True):
+def MakeResNet(freeze_weights=True, pretrain=False):
   cnn = models.resnext101_32x8d(pretrained=pretrain)
   cnn.conv1 = torch.nn.Conv2d(1, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
   cnn.fc = torch.nn.Linear(in_features=2048, out_features=1, bias=True)
@@ -132,12 +132,14 @@ ResNet_model = MakeResNet(freeze_weights= False, pretrain= True)
 if cuda_available:
     ResNet_model.cuda()
 
-#train_data = h5py.File('/Users/iani/Documents/Segmentation_project/in4it/dataset/train.h5', 'r')
-train_data = h5py.File('/raid/candi/Iani/MRes_project/dataset/dataset_zip/train.h5', 'r')
+train_data = h5py.File('/Users/iani/Documents/Segmentation_project/in4it/dataset/train.h5', 'r')
+#train_data = h5py.File('/raid/candi/Iani/MRes_project/dataset/dataset_zip/train.h5', 'r')
 train_dataset = ClassifyDataLoader(train_data)
 train_DL = torch.utils.data.DataLoader(train_dataset, batch_size = 8)
 
-val_data = h5py.File('/raid/candi/Iani/MRes_project/dataset/dataset_zip/val.h5', 'r')
+
+val_data = h5py.File('/Users/iani/Documents/Segmentation_project/in4it/dataset/val.h5', 'r')
+#val_data = h5py.File('/raid/candi/Iani/MRes_project/dataset/dataset_zip/val.h5', 'r')
 val_dataset = ClassifyDataLoader(val_data)
 val_DL = torch.utils.data.DataLoader(val_dataset, batch_size = 8)
 
@@ -155,9 +157,10 @@ def accuracy_score(predicted, target):
   """
   Accuracy for classifier model with no final sigmoid layer 
   """
+
   predicted = torch.sigmoid(predicted)
   predicted = predicted > 0.5
-  correct = (torch.round(predicted) == target.cpu()).sum().item()
+  correct = (torch.round(predicted) == target).sum().item()
 
   return correct / predicted.size(0)
 
