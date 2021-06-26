@@ -132,14 +132,14 @@ ResNet_model = MakeResNet(freeze_weights= False, pretrain= True)
 if cuda_available:
     ResNet_model.cuda()
 
-train_data = h5py.File('/Users/iani/Documents/Segmentation_project/in4it/dataset/train.h5', 'r')
-#train_data = h5py.File('/raid/candi/Iani/MRes_project/dataset/dataset_zip/train.h5', 'r')
+#train_data = h5py.File('/Users/iani/Documents/Segmentation_project/in4it/dataset/train.h5', 'r')
+train_data = h5py.File('/raid/candi/Iani/MRes_project/dataset_zip/train.h5', 'r')
 train_dataset = ClassifyDataLoader(train_data)
 train_DL = torch.utils.data.DataLoader(train_dataset, batch_size = 8)
 
 
-val_data = h5py.File('/Users/iani/Documents/Segmentation_project/in4it/dataset/val.h5', 'r')
-#val_data = h5py.File('/raid/candi/Iani/MRes_project/dataset/dataset_zip/val.h5', 'r')
+#val_data = h5py.File('/Users/iani/Documents/Segmentation_project/in4it/dataset/val.h5', 'r')
+val_data = h5py.File('/raid/candi/Iani/MRes_project/dataset_zip/val.h5', 'r')
 val_dataset = ClassifyDataLoader(val_data)
 val_DL = torch.utils.data.DataLoader(val_dataset, batch_size = 8)
 
