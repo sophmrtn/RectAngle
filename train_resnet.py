@@ -160,7 +160,7 @@ def accuracy_score(predicted, target):
 
   predicted = torch.sigmoid(predicted)
   predicted = predicted > 0.5
-  correct = (torch.round(predicted) == target).sum().item()
+  correct = (predicted == target).sum().item()
 
   return correct / predicted.size(0)
 
