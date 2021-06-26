@@ -70,6 +70,12 @@ class H5DataLoader(torch.utils.data.Dataset):
              Options:
                     * 'random' - randomly select one of the available labels
                     * 'vote' - calculate pixel-wise majority vote from available labels
+                    * 'combine_50': change between 'random' and 'vote', the number refers to 
+                                    the percentage of using vote and can be changed to in range 0~100
+                    * 'overlap_50': change between 'random' and 'vote' based on the overlapping percentage 
+                                    between label which agrees by all labellers and ground truth label,
+                                    the number refers to 
+                                    the percentage of using vote and can be changed to in range 0~100
     """
     
     super().__init__()
@@ -95,23 +101,54 @@ class H5DataLoader(torch.utils.data.Dataset):
         self.file['frame_%05d' % (subj_ix, 
                                        )][()].astype('float32')), dim=0)
 
-    if self.label == 'random':                                
+    if self.label.split('_')[0] in ['combine', 'overlap']:
+      label_percent = int(self.label.split('_')[1])
+      if self.label.split('_')[0] == 'combine':
+        label_method = random.choices(['vote','random'], weights = [label_percent, 100-label_percent])
+      if self.label.split('_')[0] == 'overlap':
+        label_percent = int(self.label.split('_')[1])
+        label_batch = torch.cat([torch.unsqueeze(torch.tensor(
+            self.file['label_%05d_%02d' % (subj_ix, label_ix
+              )][()].astype('float32')), dim=0) for label_ix in range(3)])
+        label_sum = torch.sum(label_batch, dim=0)
+        label_three_overlap = torch.sum((label_sum==3).float())
+        label_ground_truth = torch.sum((label_sum>=2).float())
+        if int(label_three_overlap/(label_ground_truth+1e-6)) < label_percent:
+          label_method = ['vote']
+        elif int(label_three_overlap/(label_ground_truth+1e-6)) >= label_percent:
+          label_method = ['random']
+      if label_method == ['vote']:
+        label_batch = torch.cat([torch.unsqueeze(torch.tensor(
+            self.file['label_%05d_%02d' % (subj_ix, label_ix
+              )][()].astype('float32')), dim=0) for label_ix in range(3)])
+        label_mean = torch.unsqueeze(torch.mean(label_batch, dim=0), dim=0)
+        label = torch.round(label_mean).int()
+      elif label_method == ['random']:
+        label = torch.unsqueeze(torch.tensor(
+          self.file['label_%05d_%02d' % (subj_ix, 
+                                          label_ix
+                                          )][()].astype(int)), dim=0)  
+    
+    elif self.label == 'random':                                
       label = torch.unsqueeze(torch.tensor(
           self.file['label_%05d_%02d' % (subj_ix, 
                                           label_ix
                                           )][()].astype(int)), dim=0)
+    
     elif self.label == 'vote':
       label_batch = torch.cat([torch.unsqueeze(torch.tensor(
           self.file['label_%05d_%02d' % (subj_ix, label_ix
             )][()].astype('float32')), dim=0) for label_ix in range(3)])
       label_mean = torch.unsqueeze(torch.mean(label_batch, dim=0), dim=0)
       label = torch.round(label_mean).int()
+    
     elif self.label == 'mean':
       label_batch = torch.cat([torch.unsqueeze(torch.tensor(
           self.file['label_%05d_%02d' % (subj_ix, label_ix
             )][()].astype('float32')), dim=0) for label_ix in range(3)])
       label = torch.unsqueeze(torch.mean(label_batch, dim=0), dim=0)
-    return(image, label)
+    
+    return (image, label)
 
 
 class ClassifyDataLoader(torch.utils.data.Dataset):
