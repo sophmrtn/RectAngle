@@ -147,7 +147,7 @@ model = rect.model.networks.UNet(n_layers=int(args.depth), device=device,
                                     gate=args.gate)
 
 trainer = rect.utils.train.Trainer(model, ensemble=ensemble, outdir=args.odir, device=device,
-                                    nb_epochs=int(args.epochs), lr_schedule=args.lr_schedule
+                                    nb_epochs=int(args.epochs), lr_schedule=args.lr_schedule,
                                     early_stop=int(args.earlystop))
 
 
