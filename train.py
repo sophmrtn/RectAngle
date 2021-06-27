@@ -102,6 +102,13 @@ parser.add_argument('--earlystop',
                     default='10',
                     help='Number of val steps with no improvement before stopping training early.')
 
+parser.add_argument('--dataloader',
+                    '--e',
+                    metavar='dataloader',
+                    type=str,
+                    action='store',
+                    default='all',
+                    help='Type of dataloader to use: all or pos only.')
 
 args = parser.parse_args()
 
@@ -128,8 +135,15 @@ if args.seed:
     random.seed(seed)
     np.random.seed(seed)
 
-f_train = h5py.File(args.train, 'r')
-train_data = rect.utils.io.H5DataLoader(f_train, label=args.label)
+#Determine which dataloader to use : all or positive frames only 
+if args.dataloader == 'all': 
+    f_train = h5py.File(args.train, 'r')
+    train_data = rect.utils.io.H5DataLoader(f_train, label=args.label)
+elif args.dataloader == 'pos': #train on positive frames only
+    f_train = h5py.File(args.train, 'r')
+    train_idx = rect.utils.io.get_positive_idx(args.train, 'train')
+    train_data = rect.utils.io.H5DataLoader_positives(f_train, indices = train_idx, label=args.label)
+
 
 if torch.cuda.is_available():
     device = torch.device('cuda')
@@ -140,8 +154,13 @@ else:
     print("Using CPU!")
 
 if args.val:
-    f_val = h5py.File(args.val, 'r')
-    val_data = rect.utils.io.H5DataLoader(f_val, label='vote')
+    if args.dataloader == 'all': 
+        f_val = h5py.File(args.val, 'r')
+        val_data = rect.utils.io.H5DataLoader(f_val, label='vote')
+    else:
+        f_val = h5py.File(args.val, 'r')
+        val_idx = rect.utils.io.get_positive_idx(args.val, 'val')
+        val_data = rect.utils.io.H5DataLoader_positives(f_val, indices = val_idx, label=args.label)
 
 model = rect.model.networks.UNet(n_layers=int(args.depth), device=device,
                                     gate=args.gate)
@@ -151,7 +170,7 @@ trainer = rect.utils.train.Trainer(model, ensemble=ensemble, outdir=args.odir, d
                                     early_stop=int(args.earlystop))
 
 #Manually setting Affine Transforms
-AffineTransform = rect.utils.transforms.Affine(prob = 0.3, scale = (1,1), degrees = 5, shear = 0, translate = 0)
+AffineTransform = rect.utils.transforms.Affine(prob = 0.3, scale = (1,1), degrees = 5, shear = 5, translate = 0.1)
 
 if args.val:
     trainer.train(train_data, val_data, train_pre=[rect.utils.transforms.z_score(), rect.utils.transforms.Flip(), AffineTransform],
