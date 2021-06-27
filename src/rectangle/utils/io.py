@@ -360,3 +360,94 @@ class PreScreenLoader(torch.utils.data.Dataset):
             )][()].astype('float32')), dim=0) for label_ix in range(3)])
       label = torch.unsqueeze(torch.mean(label_batch, dim=0), dim=0)
     return(image, label)
+
+def get_positive_idx(path, dataset_type = 'train'):
+    '''
+    Function to obtain the index of the positive frames
+
+    Input arguments:
+    path : (str)
+        Path to dataset 
+    dataset_type: (str)
+        Type of dataset: either 'train', 'val' or test' 
+    
+    Note:
+    start_frame_idx:
+    =0 for train data
+    =5296 for validation data
+    =5999 for test data
+    '''
+    
+    #Setting start index to check for 
+    if dataset_type == 'train':
+        start_frame_idx = 0 
+    elif dataset_type == 'val':
+        start_frame_idx = 5296
+    elif dataset_type == 'test':
+        start_frame_idx = 5999 
+    else:
+        raise Exception("Expected datatype train, test or val")
+        
+    _file = h5py.File(path, 'r')
+    _DS = rect.utils.io.H5DataLoader(_file, label='vote')
+    _DL = DataLoader(_DS, batch_size=1, shuffle=False)
+    positive_idx = []
+
+    for jj, (images, labels) in enumerate(_DL):
+
+        #If the frames are not empty, append the index to positive_idx
+        if not torch.all(torch.squeeze(labels) == 0):
+            positive_idx.append(jj + start_frame_idx)
+
+    return positive_idx
+
+
+class H5DataLoader_positives(torch.utils.data.Dataset):
+    def __init__(self, file, indices, label='random'):
+        """ Dataloader for hdf5 files.
+        Input arguments:
+          file : h5py File object
+                 Loaded using h5py.File(path : string)
+          keys : list, default = None
+                 Keys from h5py file to use. Useful for train-val-test split.
+                 If None, keys generated from entire file.
+          label : string, default = 'random'
+                 Method for loading segmentation labels.
+                 Options:
+                        * 'random' - randomly select one of the available labels
+                        * 'vote' - calculate pixel-wise majority vote from available labels
+        """
+
+        super().__init__()
+
+        self.file = file
+        self.subjects = indices
+        self.num_subjects = len(indices)
+        self.label = label
+
+    def __len__(self):
+        return self.num_subjects
+
+    def __getitem__(self, index):
+        subj_ix = self.subjects[index]
+        label_ix = random.randint(0, 2)
+        image = torch.unsqueeze(torch.tensor(
+            self.file['frame_%05d' % (subj_ix,
+                                      )][()].astype('float32')), dim=0)
+        if self.label == 'random':
+            label = torch.unsqueeze(torch.tensor(
+                self.file['label_%05d_%02d' % (subj_ix,
+                                               label_ix
+                                               )][()].astype(int)), dim=0)
+        elif self.label == 'vote':
+            label_batch = torch.cat([torch.unsqueeze(torch.tensor(
+                self.file['label_%05d_%02d' % (subj_ix, label_ix
+                                               )][()].astype('float32')), dim=0) for label_ix in range(3)])
+            label_mean = torch.unsqueeze(torch.mean(label_batch, dim=0), dim=0)
+            label = torch.round(label_mean).int()
+        elif self.label == 'mean':
+            label_batch = torch.cat([torch.unsqueeze(torch.tensor(
+                self.file['label_%05d_%02d' % (subj_ix, label_ix
+                                               )][()].astype('float32')), dim=0) for label_ix in range(3)])
+            label = torch.unsqueeze(torch.mean(label_batch, dim=0), dim=0)
+        return (image, label)
