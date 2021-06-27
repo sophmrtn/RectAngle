@@ -113,9 +113,9 @@ class H5DataLoader(torch.utils.data.Dataset):
         label_sum = torch.sum(label_batch, dim=0)
         label_three_overlap = torch.sum((label_sum==3).float())
         label_ground_truth = torch.sum((label_sum>=2).float())
-        if int(label_three_overlap/(label_ground_truth+1e-6)) < label_percent:
+        if int(label_three_overlap/(label_ground_truth+1e-6)*100) < label_percent:
           label_method = ['vote']
-        elif int(label_three_overlap/(label_ground_truth+1e-6)) >= label_percent:
+        elif int(label_three_overlap/(label_ground_truth+1e-6)*100) >= label_percent:
           label_method = ['random']
       if label_method == ['vote']:
         label_batch = torch.cat([torch.unsqueeze(torch.tensor(
