@@ -2,7 +2,6 @@ import torch
 from torch import nn
 import numpy as np
 import random
-from torch
 from torch.utils.data import DataLoader
 import h5py
 
