@@ -2,7 +2,9 @@ import torch
 from torch import nn
 import numpy as np
 import random
-
+from torch
+from torch.utils.data import DataLoader
+import h5py
 
 def train_val_test(file, ratio=(0.6, 0.2, 0.2)):
   """ Generate list of keys for file based on index values
@@ -389,7 +391,7 @@ def get_positive_idx(path, dataset_type = 'train'):
         raise Exception("Expected datatype train, test or val")
         
     _file = h5py.File(path, 'r')
-    _DS = rect.utils.io.H5DataLoader(_file, label='vote')
+    _DS = H5DataLoader(_file, label='vote')
     _DL = DataLoader(_DS, batch_size=1, shuffle=False)
     positive_idx = []
 
@@ -400,7 +402,6 @@ def get_positive_idx(path, dataset_type = 'train'):
             positive_idx.append(jj + start_frame_idx)
 
     return positive_idx
-
 
 class H5DataLoader_positives(torch.utils.data.Dataset):
     def __init__(self, file, indices, label='random'):
@@ -445,6 +446,7 @@ class H5DataLoader_positives(torch.utils.data.Dataset):
                                                )][()].astype('float32')), dim=0) for label_ix in range(3)])
             label_mean = torch.unsqueeze(torch.mean(label_batch, dim=0), dim=0)
             label = torch.round(label_mean).int()
+        
         elif self.label == 'mean':
             label_batch = torch.cat([torch.unsqueeze(torch.tensor(
                 self.file['label_%05d_%02d' % (subj_ix, label_ix
