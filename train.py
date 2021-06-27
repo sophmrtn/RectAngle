@@ -103,7 +103,7 @@ parser.add_argument('--earlystop',
                     help='Number of val steps with no improvement before stopping training early.')
 
 parser.add_argument('--dataloader',
-                    '--e',
+                    '--dl',
                     metavar='dataloader',
                     type=str,
                     action='store',
