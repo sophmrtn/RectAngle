@@ -144,7 +144,6 @@ elif args.dataloader == 'pos': #train on positive frames only
     train_idx = rect.utils.io.get_positive_idx(args.train, 'train')
     train_data = rect.utils.io.H5DataLoader_positives(f_train, indices = train_idx, label=args.label)
 
-
 if torch.cuda.is_available():
     device = torch.device('cuda')
     torch.backends.cudnn.benchmark = True
@@ -170,7 +169,7 @@ trainer = rect.utils.train.Trainer(model, ensemble=ensemble, outdir=args.odir, d
                                     early_stop=int(args.earlystop))
 
 #Manually setting Affine Transforms
-AffineTransform = rect.utils.transforms.Affine(prob = 0.3, scale = (1,1), degrees = 5, shear = 5, translate = 0.1)
+AffineTransform = rect.utils.transforms.Affine(prob = 0.3, scale = (0.9,1.1), degrees = 5, shear = 5, translate = 0.1)
 
 if args.val:
     trainer.train(train_data, val_data, train_pre=[rect.utils.transforms.z_score(), rect.utils.transforms.Flip(), AffineTransform],
