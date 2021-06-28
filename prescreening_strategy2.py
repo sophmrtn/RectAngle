@@ -154,7 +154,7 @@ for idx_thresh, classification_threshold in enumerate(classification_thresholds)
 
     #Obtaining plots of the histogram 
 
-    #Obtain all unique FP scores for screen, no screen method 
+#Obtain all unique FP scores for screen, no screen method 
 for idx in range(len(classification_thresholds)):
     unique_fp_screen = [np.unique(fp_vals) for fp_vals in all_fp_screen[idx] if len(fp_vals) > 0]
     unique_fp_screen = np.concatenate(unique_fp_screen, axis = 0)
@@ -167,6 +167,7 @@ for idx in range(len(classification_thresholds)):
     plt.hist(unique_fp_noscreen, label = "noscreen")
     plt.hist(unique_fp_screen, label = "screen", bins = 10)
     plt.xlabel("Number of FP pixels per negative segmented frame")
+    plt.ylabel("Number of negative frames")
     plt.title(f"Classification threshold: {classification_thresholds[idx]}")
     plt.legend() 
 plt.show()
