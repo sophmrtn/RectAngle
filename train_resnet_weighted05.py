@@ -176,8 +176,8 @@ avg_accuracy_val = np.zeros(no_epochs,)
 best_loss = np.inf
 
 #Saving file names
-loss_log_file = 'classification_loss_resnet_weighted.csv'
-saved_model_file = 'resnet_weighted' #Name of saved moel 
+loss_log_file = 'classification_loss_resnet_weighted05.csv'
+saved_model_file = 'resnet_weighted05' #Name of saved moel 
 
 ### TRAINING AND VALIDATION FOR N NO OF EPOCHS ###
 with open(loss_log_file, 'w') as loss:
