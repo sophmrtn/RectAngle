@@ -125,7 +125,7 @@ def MakeResNet(freeze_weights=True, pretrain=False):
       param.requires_grad=False
   return ResNet(cnn)
 
-os.environ["CUDA_VISIBLE_DEVICES"]="1"
+os.environ["CUDA_VISIBLE_DEVICES"]="0"
 cuda_available = torch.cuda.is_available()
 
 ResNet_model = MakeResNet(freeze_weights= False, pretrain= True)
