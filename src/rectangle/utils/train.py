@@ -179,8 +179,8 @@ class Trainer(nn.Module):
                             if lr_schedule_ == 'reduce_on_plateau':
                                 lr_schedule_.step(1-np.nanmean(dice_epoch))
 
-                            writer_.add_scalar('val/dice_loss_ensemble', np.nanmean(dice_epoch), epoch)
-                            writer_.add_scalar('val/dice_coefficient_ensemble', 1-np.nanmean(dice_epoch), epoch)
+                            writer_.add_scalar('val/dice_coefficient_ensemble', np.nanmean(dice_epoch), epoch)
+                            writer_.add_scalar('val/dice_loss_ensemble', 1-np.nanmean(dice_epoch), epoch)
 
                             ## show some (e.g.,10) example images in tensorboard
                             ex_num = 10
@@ -285,8 +285,8 @@ class Trainer(nn.Module):
                             dice_epoch.append(1 - dice_metric.item())
                         dice_log[int(epoch//self.val_interval)] = np.nanmean(dice_epoch)
 
-                        self.writer.add_scalar('val/dice_loss', np.nanmean(dice_epoch), epoch)
-                        self.writer.add_scalar('val/dice_coefficient', 1-np.nanmean(dice_epoch), epoch)
+                        self.writer.add_scalar('val/dice_coefficient', np.nanmean(dice_epoch), epoch)
+                        self.writer.add_scalar('val/dice_loss', 1-np.nanmean(dice_epoch), epoch)
 
                         ## show some (e.g.,10) example images in tensorboard
                         ex_num = 10
