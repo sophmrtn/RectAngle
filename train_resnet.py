@@ -104,10 +104,8 @@ class ClassifyDataLoader(torch.utils.data.Dataset):
 class ResNet(torch.nn.Module):
   def __init__(self, model):
     super().__init__()
-    """     self.normalise = transforms.Normalize(0.449, 0.226)
-    self.resample = torch.nn.Conv2d(1, 96, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False) """
     self.normalise = transforms.Compose([
-                    transforms.Resize(224),
+                    transforms.Resize([224,224]),
                     transforms.Normalize(0.449, 0.226)])
     self.network = model
 
