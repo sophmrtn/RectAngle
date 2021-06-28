@@ -134,7 +134,7 @@ if cuda_available:
     ResNet_model.cuda()
 
 #train_data = h5py.File('/Users/iani/Documents/Segmentation_project/in4it/dataset/train.h5', 'r')
-train_data = h5py.File('/raid/candi/Iani/MRes_project/dataset_zip/train.h5', 'r')
+train_data = h5py.File('/raid/candi/Iani/MRes_project/dataset/train.h5', 'r')
 train_all = ClassifyDataLoader(train_data)
 
 #Split up training data into 0.7:0.1 split 
