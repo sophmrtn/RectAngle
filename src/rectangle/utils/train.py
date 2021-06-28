@@ -151,8 +151,8 @@ class Trainer(nn.Module):
                         lr_schedule_.step()
                     loss_log_ensemble[i,epoch] = np.nanmean(loss_epoch)
                     if epoch % self.print_interval == 0:
-                        writer_.add_scalar('train/dice_loss_ensemble', loss_, epoch)
-                        writer_.add_scalar('train/dice_coefficient_ensemble', 1-loss_, epoch)
+                        writer_.add_scalar('train/dice_loss_ensemble', np.nanmean(loss_epoch), epoch)
+                        writer_.add_scalar('train/dice_coefficient_ensemble', 1-np.nanmean(loss_epoch), epoch)
                         print('Epoch #{}: Mean Dice Loss: {}'.format(epoch, loss_log_ensemble[i,epoch]))
                     if epoch % self.val_interval == 0:
                         dice_epoch = []
@@ -179,8 +179,8 @@ class Trainer(nn.Module):
                             if lr_schedule_ == 'reduce_on_plateau':
                                 lr_schedule_.step(1-np.nanmean(dice_epoch))
 
-                            writer_.add_scalar('val/dice_loss_ensemble', dice_metric, epoch)
-                            writer_.add_scalar('val/dice_coefficient_ensemble', 1-dice_metric, epoch)
+                            writer_.add_scalar('val/dice_loss_ensemble', np.nanmean(dice_epoch), epoch)
+                            writer_.add_scalar('val/dice_coefficient_ensemble', 1-np.nanmean(dice_epoch), epoch)
 
                             ## show some (e.g.,10) example images in tensorboard
                             ex_num = 10
@@ -257,8 +257,8 @@ class Trainer(nn.Module):
                     loss_epoch.append(loss_.item())
                 loss_log[epoch] = np.nanmean(loss_epoch)
                 if epoch % self.print_interval == 0:
-                    self.writer.add_scalar('train/dice_loss', loss_, epoch)
-                    self.writer.add_scalar('train/dice_coefficient', 1-loss_, epoch)
+                    self.writer.add_scalar('train/dice_loss', np.nanmean(loss_epoch), epoch)
+                    self.writer.add_scalar('train/dice_coefficient', 1-np.nanmean(loss_epoch), epoch)
                     print('Epoch #{}: Mean Dice Loss: {}'.format(epoch, loss_log[epoch]))
                 if epoch % self.val_interval == 0:
                     dice_epoch = []
@@ -285,8 +285,8 @@ class Trainer(nn.Module):
                             dice_epoch.append(1 - dice_metric.item())
                         dice_log[int(epoch//self.val_interval)] = np.nanmean(dice_epoch)
 
-                        self.writer.add_scalar('val/dice_loss', dice_metric, epoch)
-                        self.writer.add_scalar('val/dice_coefficient', 1-dice_metric, epoch)
+                        self.writer.add_scalar('val/dice_loss', np.nanmean(dice_epoch), epoch)
+                        self.writer.add_scalar('val/dice_coefficient', 1-np.nanmean(dice_epoch), epoch)
 
                         ## show some (e.g.,10) example images in tensorboard
                         ex_num = 10
