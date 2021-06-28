@@ -72,6 +72,7 @@ class ClassifyDataLoader(torch.utils.data.Dataset):
     start_subj = int(self.split_keys[0][1])
     last_subj = int(self.split_keys[-1][1])
     self.num_subjects = (last_subj - start_subj)+ 1  #Add 1 to account for 0 idx python
+    #self.num_subjects = len(self.split_keys)
     self.subjects = [key[1] for key in self.split_keys if key[0] == 'frame']
     #self.subjects = np.linspace(start_subj, last_subj, 
     #                            self.num_subjects+1, dtype=int)
@@ -134,14 +135,17 @@ if cuda_available:
 
 #train_data = h5py.File('/Users/iani/Documents/Segmentation_project/in4it/dataset/train.h5', 'r')
 train_data = h5py.File('/raid/candi/Iani/MRes_project/dataset_zip/train.h5', 'r')
-train_dataset = ClassifyDataLoader(train_data)
-train_DL = torch.utils.data.DataLoader(train_dataset, batch_size = 8)
+train_all = ClassifyDataLoader(train_data)
 
+#Split up training data into 0.7:0.1 split 
+train_len = np.int(np.round((0.7/0.8)*train_all.__len__()))
+val_len = train_all.__len__() - train_len
 
-#val_data = h5py.File('/Users/iani/Documents/Segmentation_project/in4it/dataset/val.h5', 'r')
-val_data = h5py.File('/raid/candi/Iani/MRes_project/dataset_zip/val.h5', 'r')
-val_dataset = ClassifyDataLoader(val_data)
-val_DL = torch.utils.data.DataLoader(val_dataset, batch_size = 8)
+train_dataset = torch.utils.data.Subset(train_all, list(np.arange(0,train_len)))
+val_dataset = torch.utils.data.Subset(train_all, list(np.arange(train_len,train_len + val_len)))
+
+train_DL = torch.utils.data.DataLoader(train_dataset, batch_size = 16, shuffle = True)
+val_DL = torch.utils.data.DataLoader(val_dataset, batch_size = 8, shuffle = True)
 
 def accuracy_score_nosig(predicted, target): 
   """
@@ -172,11 +176,11 @@ avg_accuracy_val = np.zeros(no_epochs,)
 best_loss = np.inf
 
 #Saving file names
-loss_log_file = 'classification_loss_resnet.csv'
-saved_model_file = 'resnet' #Name of saved moel 
+loss_log_file = 'classification_loss_resnet_new.csv'
+saved_model_file = 'resnet_new' #Name of saved moel 
 
 ### TRAINING AND VALIDATION FOR N NO OF EPOCHS ###
-with open('classification_loss_resnet.csv', 'w') as loss:
+with open(loss_log_file, 'w') as loss:
     loss.write('''\
       Epoch, train_loss, val_loss, val_accuracy
       ''')
@@ -241,6 +245,6 @@ for epoch in range(no_epochs):
         torch.save(ResNet_model, saved_model_file)
 
     ### SAVING LOSS VALUES
-    with open('classification_loss_resnet.csv', 'a') as loss:
+    with open(loss_log_file, 'a') as loss:
         all_vals =  np.concatenate([np.array(epoch).reshape(1,), avg_loss[epoch].reshape(1,), avg_loss_val[epoch].reshape(1,), avg_accuracy_val[epoch].reshape(1,)], axis = 0)
         np.savetxt(loss, np.reshape(all_vals, [1,-1]), '%s', delimiter =",")
