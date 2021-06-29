@@ -22,7 +22,6 @@ class ResNet(torch.nn.Module):
 
 ####### SET THRESHOLDS
 segmentation_threshold = 0.5 
-classification_thresholds = np.array([0.5,0.6,0.7,0.8])
 
 use_cuda = torch.cuda.is_available()
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -30,42 +29,36 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 ####### CHANGE PATHS
 # Ensemble path
 num_ensemble = 3
+""" latest_model = ['52.pth', '44.pth', '91.pth']
+path_str = './dataset/af1_models/af1_pt5_combine_25/model/'
+output_name = 'combine_25'
+latest_model = ['52.pth', '48.pth', '115.pth']
+path_str = './dataset/af1_models/af1_pt5_combine_50/model/'
+output_name = 'combine_50'
+latest_model = ['52.pth', '27.pth', '97.pth']
+path_str = './dataset/af1_models/af1_pt5_combine_75/model/'
+output_name = 'combine_75'
+latest_model = ['47.pth', '76.pth', '88.pth']
+path_str = './dataset/af1_models/af1_pt5_mean/model/'
+output_name = 'mean'
 latest_model = ['67.pth', '94.pth', '54.pth']
 path_str = './dataset/af1_models/af1_pt5_random/model/'
-output_name = 'random'
+output_name = 'random' """
+latest_model = ['66.pth', '78.pth', '45.pth']
+path_str = './dataset/af1_models/af1_pt5_vote/model/'
+output_name = 'vote'
 
 # Classifier path
 class_model = torch.load("./dataset/classifiers/resnet_affine2", map_location = torch.device(device))
 
 # Test data
-test_file = h5py.File('./dataset/test.h5', 'r')
+test_file = h5py.File('./dataset/valtest_joint.h5', 'r')
 
 ### Utils
 def standardise(image):
     means = image.mean(dim=(1,2,3), keepdim=True)
     stds = image.std(dim=(1,2,3), keepdim=True)
     return (image - means.expand(image.size())) / stds.expand(image.size())
-
-def dice_score2(y_pred, y_true, eps=1e-8):
-    '''
-    y_pred, y_true -> [N, C=1, D, H, W]
-    '''
-    #y_pred[y_pred < 0.5] = 0.
-    #y_pred[y_pred > 0] = 1.
-    
-    #Calculate the number of incorrectly labelled pixels 
-    numerator = torch.sum(y_true*y_pred, dim=(2,3)) * 2
-    denominator = torch.sum(y_true, dim=(2,3)) + torch.sum(y_pred, dim=(2,3)) + eps
-    return numerator / denominator
-
-def dice_fp(y_pred, y_true, pos_frames, neg_frames): 
-    """ A function that computes dice score on positive frames, 
-    and FP pixels on negative frames, based off Yipeng's metrics
-    """
-    dice_ = dice_score2(y_pred[pos_frames, :, :], y_true[pos_frames, :, :])
-    fp = torch.sum(y_pred[neg_frames, :, :], dim = [1,2,3])
-    print(np.shape(fp))
-    return dice_, fp 
 
 # Loading ensemble segmentation
 model_paths = [os.path.join(path_str, 'model_'+ str(idx), latest_model[idx]) for idx in range(num_ensemble)]
