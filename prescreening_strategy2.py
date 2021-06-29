@@ -7,17 +7,14 @@ import os
 from rectangle.model.networks import DenseNet as DenseNet 
 from torch.utils.data import DataLoader
 from matplotlib import pyplot as plt
+from torchvision import transforms
 
 class ResNet(torch.nn.Module):
   def __init__(self, model):
     super().__init__()
-    self.normalise = transforms.Compose([
-                    transforms.Resize(224),
-                    transforms.Normalize(0.449, 0.226)])
     self.network = model
 
   def forward(self, x):
-    x = self.normalise(x)
     x = self.network(x)
     return x
 
@@ -31,11 +28,9 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 ####### CHANGE PATHS
 # Ensemble path
-#num_ensemble = 5 
-#latest_model = ['13.pth', '4.pth', '30.pth', '28.pth', '28.pth'] #Checked manually 
 num_ensemble = 3
-latest_model = ['50.pth', '46.pth', '36.pth'] #, '28.pth', '28.pth']
-path_str = './dataset/ensemble_all_send/'
+latest_model = ['67.pth', '94.pth', '54.pth']
+path_str = './dataset/af1_models/af1_pt5_random/model/'
 
 # Classifier path
 class_model = torch.load("./dataset/classifiers/resnet_affine2", map_location = torch.device(device))
@@ -67,6 +62,7 @@ def dice_fp(y_pred, y_true, pos_frames, neg_frames):
     """
     dice_ = dice_score2(y_pred[pos_frames, :, :], y_true[pos_frames, :, :])
     fp = torch.sum(y_pred[neg_frames, :, :], dim = [1,2,3])
+    print(np.shape(fp))
     return dice_, fp 
 
 # Loading ensemble segmentation
@@ -85,12 +81,21 @@ for seg_model in seg_models:
     seg_model.eval()
 
 # Initialise arrays for gathering data
+
+## FRAME-WISE
 all_dice_screen = [[] for i in range(len(classification_thresholds))]
 all_dice_noscreen = [[] for i in range(len(classification_thresholds))]
 
+## PIXEL-WISE
+gt_pixels = [[] for i in range(len(classification_thresholds))]
+pred_pixels = [[] for i in range(len(classification_thresholds))]
+diff_gt_pred_pixels = [[] for i in range(len(classification_thresholds))]
 all_fp_screen = [[] for i in range(len(classification_thresholds))]
 all_fp_noscreen = [[] for i in range(len(classification_thresholds))]
 
+normalise_img = transforms.Compose([
+                transforms.Resize([224,224]),
+                transforms.Normalize(0.449, 0.226)])
 
 # Run for different classifications
 for idx_thresh, classification_threshold in enumerate(classification_thresholds):
@@ -108,9 +113,8 @@ for idx_thresh, classification_threshold in enumerate(classification_thresholds)
             # Obtain positive and negative frames 
             positive_frames = [(1 in label) for label in labels_test]
             negative_frames = ~np.array(positive_frames)
-
             # Obtain prediction for classifier 
-            class_preds = class_model(images_test) #If using densenet 
+            class_preds = class_model(normalise_img(images_test)) #If using densenet 
             
             # Normalise images for segmentation network 
             norm_images_test = standardise(images_test)
@@ -130,7 +134,7 @@ for idx_thresh, classification_threshold in enumerate(classification_thresholds)
             all_fp_noscreen[idx_thresh].append(fp_noscreen.detach().cpu().numpy())
 
             ### Pre-screened results only ### 
-            prostate_idx = np.where(torch.sigmoid(class_preds).cpu() > classification_threshold)[0]
+            prostate_idx = np.where(class_preds.cpu() > classification_threshold)[0]
             
             positive_frames_screened = [positive_frames[i] for i in prostate_idx]
             negative_frames_screened = [not positive_frames[i] for i in prostate_idx]
@@ -139,8 +143,8 @@ for idx_thresh, classification_threshold in enumerate(classification_thresholds)
             all_dice_screen[idx_thresh].append(dice_screen.detach().cpu().numpy())
             all_fp_screen[idx_thresh].append(fp_screen.detach().cpu().numpy())
 
-            print(f"Dice scores: Not-screened : {dice_noscreen.detach().cpu().numpy()} | Screened : {dice_screen.detach().cpu().numpy()}")
-            print(f"FP scores: Not-screened : {fp_noscreen.detach().cpu().numpy()} | Screened : {fp_screen.detach().cpu().numpy()}")
+            #print(f"Dice scores: Not-screened : {dice_noscreen.detach().cpu().numpy()} | Screened : {dice_screen.detach().cpu().numpy()}")
+            #print(f"FP scores: Not-screened : {fp_noscreen.detach().cpu().numpy()} | Screened : {fp_screen.detach().cpu().numpy()}")
 
 """         print(f"Threshold: {classification_threshold} Non-screened: {np.nanmean(all_dice_noscreen[idx_thresh])}, \
             Screened: {np.nanmean(all_dice_screen[idx_thresh])}") """
