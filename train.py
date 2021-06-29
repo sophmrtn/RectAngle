@@ -160,7 +160,10 @@ trainer = rect.utils.train.Trainer(model, ensemble=ensemble, outdir=args.odir, d
 
 
 #Manually setting Affine Transforms
-AffineTransform = rect.utils.transforms.Affine(prob = 0.3, scale = (0.95,1), degrees = 2.5, shear = 0, translate = 0.05)
+## Affine Method 1
+# AffineTransform = rect.utils.transforms.Affine(prob = 0.3, scale = (0.95,1), degrees = 2.5, shear = 0, translate = 0.05)
+## Affine Method 2
+AffineTransform = rect.utils.transforms.Affine(prob = 0.3, scale = (0.9,1), degrees = 5, shear = 0, translate = 0.1)
 
 if args.val:
     trainer.train(train_data, val_data, train_pre=[rect.utils.transforms.z_score(), rect.utils.transforms.Flip(), AffineTransform],
