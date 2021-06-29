@@ -38,7 +38,7 @@ latest_model = ['50.pth', '46.pth', '36.pth'] #, '28.pth', '28.pth']
 path_str = './dataset/ensemble_all_send/'
 
 # Classifier path
-class_model = torch.load("./dataset/classifiers/dense_aug", map_location = torch.device(device))
+class_model = torch.load("./dataset/classifiers/resnet_affine2", map_location = torch.device(device))
 
 # Test data
 test_file = h5py.File('./dataset/test.h5', 'r')
@@ -85,11 +85,11 @@ for seg_model in seg_models:
     seg_model.eval()
 
 # Initialise arrays for gathering data
-all_dice_screen = np.array([[] for i in range(len(classification_thresholds))])
-all_dice_noscreen = np.array([[] for i in range(len(classification_thresholds))])
+all_dice_screen = [[] for i in range(len(classification_thresholds))]
+all_dice_noscreen = [[] for i in range(len(classification_thresholds))]
 
-all_fp_screen = np.array([[] for i in range(len(classification_thresholds))])
-all_fp_noscreen = np.array([[] for i in range(len(classification_thresholds))])
+all_fp_screen = [[] for i in range(len(classification_thresholds))]
+all_fp_noscreen = [[] for i in range(len(classification_thresholds))]
 
 
 # Run for different classifications
@@ -138,13 +138,12 @@ for idx_thresh, classification_threshold in enumerate(classification_thresholds)
             dice_screen, fp_screen = dice_fp(combined_predictions[prostate_idx, :,:], labels_test[prostate_idx, :,:], positive_frames_screened, negative_frames_screened)
             all_dice_screen[idx_thresh].append(dice_screen.detach().cpu().numpy())
             all_fp_screen[idx_thresh].append(fp_screen.detach().cpu().numpy())
-            print(np.shape(all_dice_noscreen[0][jj]))
 
-            #print(f"Dice scores: Not-screened : {dice_noscreen.detach().cpu().numpy()} | Screened : {dice_screen.detach().cpu().numpy()}")
-            #print(f"FP scores: Not-screened : {fp_noscreen.detach().cpu().numpy()} | Screened : {fp_screen.detach().cpu().numpy()}")
+            print(f"Dice scores: Not-screened : {dice_noscreen.detach().cpu().numpy()} | Screened : {dice_screen.detach().cpu().numpy()}")
+            print(f"FP scores: Not-screened : {fp_noscreen.detach().cpu().numpy()} | Screened : {fp_screen.detach().cpu().numpy()}")
 
-        print(f"Threshold: {classification_threshold} Non-screened: {np.nanmean(all_dice_noscreen[idx_thresh])}, \
-            Screened: {np.nanmean(all_dice_screen[idx_thresh])}")
+"""         print(f"Threshold: {classification_threshold} Non-screened: {np.nanmean(all_dice_noscreen[idx_thresh])}, \
+            Screened: {np.nanmean(all_dice_screen[idx_thresh])}") """
 
     #Obtaining plots of the histogram 
 print(np.shape(all_dice_noscreen))
