@@ -174,8 +174,8 @@ avg_accuracy_val = np.zeros(no_epochs,)
 best_loss = np.inf
 
 #Saving file names
-loss_log_file = 'classification_loss_resnet_new.csv'
-saved_model_file = 'resnet_new' #Name of saved moel 
+loss_log_file = 'classification_loss_resnet_affine2.csv'
+saved_model_file = 'resnet_affine2' #Name of saved moel 
 
 ### TRAINING AND VALIDATION FOR N NO OF EPOCHS ###
 with open(loss_log_file, 'w') as loss:
@@ -185,7 +185,8 @@ with open(loss_log_file, 'w') as loss:
 
 optimiser = torch.optim.Adam(ResNet_model.parameters(), lr=1e-4)
 loss_fn = torch.nn.BCEWithLogitsLoss(reduction='mean')#, pos_weight = torch.tensor(0.25))
-Apply_transform = Affine(prob = 0.3, degrees = 5, translate= 0.1, scale = (0.9,1.1), shear = 5) 
+#Apply_transform = Affine(prob = 0.3, degrees = 5, translate= 0.1, scale = (0.9,1.1), shear = 5) 
+Apply_transform =Affine(prob = 0.3, scale = (0.95,1), degrees = 2.5, shear = 0, translate = 0.05)
 
 for epoch in range(no_epochs):
 
