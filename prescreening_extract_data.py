@@ -32,6 +32,7 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 num_ensemble = 3
 latest_model = ['67.pth', '94.pth', '54.pth']
 path_str = './dataset/af1_models/af1_pt5_random/model/'
+output_name = 'random'
 
 # Classifier path
 class_model = torch.load("./dataset/classifiers/resnet_affine2", map_location = torch.device(device))
@@ -109,7 +110,7 @@ with torch.no_grad():
         # Obtain positive and negative frames 
         gt_frames = [(1 in label) for label in labels_test]
         # Obtain prediction for classifier 
-        class_preds = class_model(normalise_img(images_test)) #If using densenet 
+        class_preds = class_model(normalise_img(images_test)) 
         # Normalise images for segmentation network 
         norm_images_test = standardise(images_test)
         combined_predictions = torch.zeros_like(labels_test, dtype = float)
@@ -127,5 +128,7 @@ with torch.no_grad():
         gt_pixels = np.append(gt_pixels,torch.sum(labels_test, dim = [1,2,3]).detach().cpu().numpy())
         tp_gt_pred_pixels = np.append(tp_gt_pred_pixels,torch.sum(labels_test*combined_predictions, dim = [1,2,3]).detach().cpu().numpy())
 
-np.savemat('prescreening_random.mat','gt_frame','gt_frame','screening_prob_frame','pred_pixels','gt_pixels','tp_gt_pred_pixels')
+prescreen_dict = {'label':output_name,'gt_frame':gt_frame,'screening_prob_frame':screening_prob_frame,'pred_pixels':pred_pixels,\
+    'gt_pixels':gt_pixels,'tp_gt_pred_pixels':tp_gt_pred_pixels}
+savemat(output_name+'.mat', prescreen_dict)
 
