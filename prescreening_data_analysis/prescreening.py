@@ -1,6 +1,9 @@
 from scipy.io import loadmat
 import matplotlib.pyplot as plt
 import numpy as np
+from sklearn.metrics import confusion_matrix
+import pandas as pd
+import sys
 
 # Fields of the loaded .mat files
 # gt_frame = framewise binary ground truth
@@ -10,14 +13,33 @@ import numpy as np
 # tp_gt_pred_pixels = pixelwise #pixels true positive
 
 random_data = loadmat('random.mat')
-vote_data  = loadmat('vote.mat')
+vote_data = loadmat('vote.mat')
 mean_data = loadmat('mean.mat')
 combine_25 = loadmat('combine_25.mat')
 combine_50 = loadmat('combine_50.mat')
 combine_75 = loadmat('combine_75.mat')
 
-#random_data = loadmat('mean.mat')
 
+def get_FP_prescreened(dict_label,threshold):
+    # make a boolean mask for specific threshold for prescreening
+    mask = np.zeros(len(dict_label['screening_prob_frame'][0]))
+    mask[dict_label['screening_prob_frame'][0] >= threshold] = 1
+    tn, fp, fn, tp = confusion_matrix(dict_label['gt_frame'][0], mask).ravel()
+    #print(tn, fp, fn, tp)
+    return fp/(fp+tn)
+
+index = np.linspace(0, 5, 6)
+columns = ['random_data', 'vote_data', 'mean_data','combine_25','combine_50','combine_75']
+df = pd.DataFrame(index=index, columns=columns)
+for ii, data1 in enumerate([random_data, vote_data, mean_data,combine_25,combine_50,combine_75]):
+    for i in index:
+        df.iloc[np.int(i)][ii] = get_FP_prescreened(data1,i)
+print(df)
+ax = df.plot.bar(rot=0)
+plt.xlabel("Threshold values")
+plt.ylabel("FP rate")
+
+#random_data = loadmat('mean.mat')
 
 positive_frames = random_data['gt_frame'].astype(bool)[0]
 negative_frames = np.abs(random_data['gt_frame']-1).astype(bool)[0]
@@ -30,12 +52,11 @@ def get_dice(dict_label):
 
 def get_boolean_prescreened(dict_label,threshold):
     # make a boolean mask for specific threshold for prescreening
-    mask = np.copy(dict_label['screening_prob_frame'])
-    mask[mask<threshold] = 0.
-    mask[mask>=threshold] = 1.
+    mask = np.zeros(len(dict_label['screening_prob_frame'][0]))
+    mask[dict_label['screening_prob_frame'][0] >= threshold] = 1
     preds = np.copy(dict_label['pred_pixels'][0])
     preds[preds>0] = 1
-    return (mask[0]*preds).astype(bool)
+    return (mask*preds).astype(bool)
 
 
 #def get_diff_thresh_dice
@@ -48,6 +69,7 @@ data = np.array([])
 false_negatives = np.array([])
 thresholds = np.linspace(0,5,100)
 leg = np.array(['random_data', 'vote_data', 'mean_data','combine_25','combine_50','combine_75'])
+
 for ii, data1 in enumerate([random_data, vote_data, mean_data,combine_25,combine_50,combine_75]):
     data1 = get_dice(data1)
     data = np.array([])
@@ -60,14 +82,14 @@ for ii, data1 in enumerate([random_data, vote_data, mean_data,combine_25,combine
                 subset[i] = False
             else:
                 subset[i] = True
-        # On screened frams including false negatives
+        # On screened frames including false negatives
         data = np.append(data,np.mean((data1['dice'][0]*mask.astype(float))[mask]))
         # Only frames that get passed classifier
         #data = np.append(data,np.mean((random_data['dice'][0]*mask.astype(float))[mask]))
         # false negatives
         false_negatives = np.append(false_negatives,positive_frames[~mask].sum()/positive_frames.sum())
     plt.plot(thresholds,data, label = leg[ii])
-plt.plot(thresholds,false_negatives)
+#plt.plot(thresholds,false_negatives)
 plt.ylabel("Dice score")
 plt.xlabel("Threshold values")
 plt.legend() 
@@ -84,13 +106,18 @@ preds = np.copy(random_data['pred_pixels'][0])
 preds[preds>0] = 1
 data = random_data['pred_pixels'][0][negative_frames*preds.astype(bool)]
 
-plt.hist(data, label = "no-screen")
+#bin_ranges = np.linspace(0,64188,11) #64188 is the maximal FP pixel count
+plt.hist(data, range=[0, sys.float_info.max], edgecolor='black', label="no-screen")
+
 # Get pre-screened
-for i in np.linspace(0,5,11):
+color_list = ['tab:orange', 'tab:green', 'tab:red', 'tab:purple', 'tab:brown', 'tab:pink']
+              #'tab:gray', 'tab:olive', 'tab:cyan', 'navy', 'bisque']
+
+for i in np.linspace(0,5,6):
     mask = get_boolean_prescreened(random_data,i)
     data = (random_data['pred_pixels'][0]*mask.astype(float))[negative_frames*mask]
-    plt.hist(data, label = "screen, thresh {}".format(i))
+    plt.hist(data, range=[0, sys.float_info.max], color=color_list[np.int(i)], edgecolor='black', label="screen, thresh {}".format(i))
 plt.xlabel("Number of FP pixels per negative segmented frame")
 plt.ylabel("Number of negative frames")
-plt.legend() 
+plt.legend()
 plt.show()
