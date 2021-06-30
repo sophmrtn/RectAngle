@@ -115,7 +115,7 @@ class WCE2d(nn.Module):
     label = label.view(label.size(0),-1).float()
     weight_2 = torch.tensor(torch.sum(label, axis=1)/img_size).unsqueeze(1)
     weight_1 = 1-weight_2
-    loss = -(weight_1 * (pred * torch.log(label)) + weight_2 * ((1 - pred) * torch.log(1 - label)))
+    loss = -(weight_1 * (label * torch.log(pred)) + weight_2 * ((1 - label) * torch.log(1 - pred)))
     return torch.mean(loss)
 
 
