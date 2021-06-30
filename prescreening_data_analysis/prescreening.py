@@ -12,6 +12,7 @@ import numpy as np
 random_data = loadmat('random.mat')
 vote_data  = loadmat('vote.mat')
 mean_data = loadmat('mean.mat')
+combine_25 = loadmat('combine_25.mat')
 combine_50 = loadmat('combine_50.mat')
 combine_75 = loadmat('combine_75.mat')
 
@@ -46,8 +47,8 @@ plt.figure(figsize=(6, 6))
 data = np.array([])
 false_negatives = np.array([])
 thresholds = np.linspace(0,5,100)
-leg = np.array(['random_data', 'vote_data', 'mean_data','combine_50','combine_75'])
-for ii, data1 in enumerate([random_data, vote_data, mean_data,combine_50,combine_75]):
+leg = np.array(['random_data', 'vote_data', 'mean_data','combine_25','combine_50','combine_75'])
+for ii, data1 in enumerate([random_data, vote_data, mean_data,combine_25,combine_50,combine_75]):
     data1 = get_dice(data1)
     data = np.array([])
     false_negatives = np.array([])
@@ -66,7 +67,7 @@ for ii, data1 in enumerate([random_data, vote_data, mean_data,combine_50,combine
         # false negatives
         false_negatives = np.append(false_negatives,positive_frames[~mask].sum()/positive_frames.sum())
     plt.plot(thresholds,data, label = leg[ii])
-#plt.plot(thresholds,false_negatives)
+plt.plot(thresholds,false_negatives)
 plt.ylabel("Dice score")
 plt.xlabel("Threshold values")
 plt.legend() 
