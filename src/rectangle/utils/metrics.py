@@ -103,3 +103,32 @@ class BCE2d(nn.Module):
     label = label.view(label.size(0),-1)
     loss = self.criterion(pred, label)
     return loss
+
+class WCE2d(nn.Module):
+  def __init__(self):
+      super().__init__()
+  def forward(self, pred, label):
+    img_size = label.size(2)*label.size(3)
+    pred = pred.view(pred.size(0),-1).float()
+    label = label.view(label.size(0),-1).float()
+    weight_2 = torch.tensor(torch.sum(label, axis=1)/img_size).unsqueeze(1)
+    weight_1 = 1-weight_2
+    loss = -(weight_1 * (pred * torch.log(label)) + weight_2 * ((1 - pred) * torch.log(1 - label)))
+    return torch.mean(loss)
+
+
+# class WCE2d(nn.Module):
+#   def __init__(self):
+#     super().__init__()
+#   def forward(self, pred, label):  
+#     pred = pred.view(pred.size(0),-1)           
+#     label = label.view(label.size(0),-1)
+#     pred = torch.sum(pred, axis=1)
+#     label = torch.sum(label, axis=1)
+#     img_size = label.size(2) * label.size(3)
+#     weights =  (img_size-torch.sum(label, axis=1))/(torch.sum(label, axis=1)+1e-6)
+#     # weights = (label.size(1)-torch.sum(label, axis=0))/(torch.sum(label, axis=0)+1e-6)
+#     print('label',label.shape, 'pred', pred.shape, 'weights',weights.shape)
+#     criterion = nn.BCEWithLogitsLoss(weight=None, size_average=True, pos_weight=weights)  
+#     loss = criterion(pred.float(), label.float())
+#     return loss

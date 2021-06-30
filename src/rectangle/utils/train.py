@@ -1,6 +1,6 @@
 import torch
 from torch import nn
-from rectangle.utils.metrics import DiceLoss, Precision, Recall, Accuracy, BCE2d
+from rectangle.utils.metrics import DiceLoss, Precision, Recall, Accuracy, BCE2d, WCE2d
 from rectangle.utils.transforms import Binary
 from torch.optim import Adam
 from copy import deepcopy
@@ -19,16 +19,18 @@ class Trainer(nn.Module):
     def __init__(self, model, nb_epochs=200, outdir='./logs',
      loss=DiceLoss(), metric=DiceLoss(), opt='adam',
      print_interval=1, val_interval=1, device='cuda',
-     early_stop=10, lr_schedule=None, ensemble=None): 
+     early_stop=10, lr_schedule=None, ensemble=None, img_size=403*361): 
 
         super().__init__()
 
         self.model = model
         self.nb_epochs = nb_epochs
-        self.loss = loss
-        self.loss_2 = BCE2d()
-        self.metric = metric
-        self.metric_2 = BCE2d()
+        # self.loss = loss
+        # self.loss_2 = BCE2d()
+        # self.metric = metric
+        # self.metric_2 = BCE2d()
+        self.loss = WCE2d()
+        self.metric = WCE2d()
         self.print_interval = print_interval
         self.val_interval = val_interval
         self.early_stop = early_stop
@@ -146,7 +148,8 @@ class Trainer(nn.Module):
                         if train_post:
                             for aug in train_post:
                                 pred = aug(pred)
-                        loss_ = 0.5*self.loss(pred, label) + 0.5*self.loss_2(pred.float(), label.float())
+                        loss_ = self.loss(pred, label)
+                        # loss_ = 0.5*self.loss(pred, label) + 0.5*self.loss_2(pred.float(), label.float())
                         loss_.backward()
                         opt_.step()
                         loss_epoch.append(loss_.item())
@@ -176,8 +179,8 @@ class Trainer(nn.Module):
                                 if val_post:
                                     for aug in val_post:
                                         pred = aug(pred)
-                                # dice_metric = self.metric(pred, label)
-                                dice_metric = 0.5*self.metric(pred, label) + 0.5*self.metric_2(pred.float(), label.float())
+                                dice_metric = self.metric(pred, label)
+                                # dice_metric = 0.5*self.metric(pred, label) + 0.5*self.metric_2(pred.float(), label.float())
                                 dice_epoch.append(1 - dice_metric.item())
                             dice_log_ensemble[i,int(epoch//self.val_interval)] = np.nanmean(dice_epoch)
                             if lr_schedule_ == 'reduce_on_plateau':
