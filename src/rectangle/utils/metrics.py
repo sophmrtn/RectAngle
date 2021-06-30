@@ -110,6 +110,8 @@ class WCE2d(nn.Module):
   def forward(self, pred, label):
     img_size = label.size(2)*label.size(3)
     pred = pred.view(pred.size(0),-1).float()
+    eps = 1e-6
+    pred = torch.clip(pred, min=eps, max=1-eps)
     label = label.view(label.size(0),-1).float()
     weight_2 = torch.tensor(torch.sum(label, axis=1)/img_size).unsqueeze(1)
     weight_1 = 1-weight_2
