@@ -92,3 +92,14 @@ class Accuracy(object):
     correct = (torch.round(inputs) == targets).sum().item()
 
     return correct / inputs.size(0)
+
+
+class BCE2d(nn.Module):
+  def __init__(self):
+    super(BCE2d, self).__init__()
+    self.criterion = nn.BCELoss(weight=None, size_average=True)  
+  def forward(self, pred, label):  
+    pred = pred.view(pred.size(0),-1)           
+    label = label.view(label.size(0),-1)
+    loss = self.criterion(pred, label)
+    return loss
