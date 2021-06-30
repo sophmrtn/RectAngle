@@ -146,10 +146,7 @@ class Trainer(nn.Module):
                         if train_post:
                             for aug in train_post:
                                 pred = aug(pred)
-                        loss_1 = self.loss(pred, label) 
-                        # loss_2 = self.loss_2(pred, label.long())
-                        # loss_ = 0.5*loss_1 + 0.5*loss_2
-                        loss_ = self.loss(pred, label) + self.loss_2(pred.float(), label.float())
+                        loss_ = 0.5*self.loss(pred, label) + 0.5*self.loss_2(pred.float(), label.float())
                         loss_.backward()
                         opt_.step()
                         loss_epoch.append(loss_.item())
