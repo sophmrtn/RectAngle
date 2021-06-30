@@ -12,6 +12,7 @@ import numpy as np
 from scipy.ndimage import laplace
 from torch.utils.tensorboard import SummaryWriter
 from torchvision.utils import make_grid
+import random
 
 
 class Trainer(nn.Module):
@@ -25,6 +26,7 @@ class Trainer(nn.Module):
         self.model = model
         self.nb_epochs = nb_epochs
         self.loss = loss
+        self.loss_2 = torch.nn.CrossEntropyLoss(reduction='mean')
         self.metric = metric
         self.print_interval = print_interval
         self.val_interval = val_interval
@@ -143,7 +145,7 @@ class Trainer(nn.Module):
                         if train_post:
                             for aug in train_post:
                                 pred = aug(pred)
-                        loss_ = self.loss(pred, label)
+                        loss_ = 0.5*self.loss(pred, label) + 0.5*self.loss_2(pred, label)
                         loss_.backward()
                         opt_.step()
                         loss_epoch.append(loss_.item())
