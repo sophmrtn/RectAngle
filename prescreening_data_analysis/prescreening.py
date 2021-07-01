@@ -31,7 +31,7 @@ def get_FP_prescreened(dict_label, threshold):
 
 
 index = np.linspace(0, 5, 6)
-columns = ['Vote', 'Random', 'Mean', 'Combine (25)', 'Combine (50)', 'Combine (75)']
+columns = ['Vote', 'Random', 'Mean', 'Combine (25%)', 'Combine (50%)', 'Combine (75%)']
 df_FP = pd.DataFrame(index=index, columns=columns)
 df_FN = df_FP.copy()
 
@@ -87,7 +87,7 @@ plt.figure(figsize=(6, 6))
 data = np.array([])
 false_negatives = np.array([])
 thresholds = np.linspace(0, 5, 100)
-leg = np.array(['Vote', 'Random', 'Mean', 'Combine (25)', 'Combine (50)', 'Combine (75)'])
+leg = np.array(['Vote', 'Random', 'Mean', 'Combine (25%)', 'Combine (50%)', 'Combine (75%)'])
 
 for ii, data1 in enumerate([vote_data, random_data, mean_data, combine_25, combine_50, combine_75]):
     data1 = get_dice(data1)
@@ -103,8 +103,6 @@ for ii, data1 in enumerate([vote_data, random_data, mean_data, combine_25, combi
             else:
                 subset[i] = True
         # On screened frames including false negatives
-        print((data1['dice'][0] * mask.astype(float))[mask])
-        print(len((data1['dice'][0] * mask.astype(float))[mask]))
         data = np.append(data, np.mean((data1['dice'][0] * mask.astype(float))[mask]))
         #err = np.append(err, np.std((data1['dice'][0] * mask.astype(float))[mask]))
         # Only frames that get passed classifier
@@ -115,6 +113,7 @@ for ii, data1 in enumerate([vote_data, random_data, mean_data, combine_25, combi
     #plt.errorbar(thresholds, data, yerr=err)
 # plt.plot(thresholds,false_negatives)
 plt.ylabel("Mean Dice")
+#plt.ylim(0)
 plt.xlabel("Threshold")
 plt.legend(title="Method")
 plt.tight_layout()
