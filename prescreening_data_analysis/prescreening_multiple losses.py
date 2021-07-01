@@ -23,8 +23,10 @@ combine_75 = loadmat('combine_75.mat')
 def get_FP_prescreened(dict_label, threshold):
     # make a boolean mask for specific threshold for prescreening
     mask = np.zeros(len(dict_label['screening_prob_frame'][0]))
+    mask2 = np.zeros(len(dict_label['screening_prob_frame'][0]))
     mask[dict_label['screening_prob_frame'][0] >= threshold] = 1
-    tn, fp, fn, tp = confusion_matrix(dict_label['gt_frame'][0], mask).ravel()
+    mask2[dict_label['pred_pixels'][0] > 0] = 1
+    tn, fp, fn, tp = confusion_matrix(dict_label['gt_frame'][0], mask*mask2).ravel()
     return tn, fp, fn, tp
 
 def get_FP_prescreened_just_seg(dict_label):
