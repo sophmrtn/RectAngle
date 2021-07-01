@@ -85,12 +85,12 @@ def get_false_area_just_seg(dict_label):
         # FP (gt=0, prediction=1)
         if dict_label['gt_frame'][0][k] == 0 and mask[k] == 1:
             # get number of predicted pixels
-            FP_pixels.append(dict_label['pred_pixels'])
+            FP_pixels.append(dict_label['pred_pixels'][0][k])
 
         # FN (gt=1, prediction=0)
         if dict_label['gt_frame'][0][k] == 1 and mask[k] == 0:
             # get number of ground truth pixels
-            FN_pixels.append(dict_label['gt_pixels'])
+            FN_pixels.append(dict_label['gt_pixels'][0][k])
 
     pixel_area = 0.177994000000000 * 0.161290000000000  # mm^2
     mean_FP_area = 0
