@@ -1,0 +1,91 @@
+from scipy.io import loadmat
+import matplotlib.pyplot as plt
+import numpy as np
+from sklearn.metrics import confusion_matrix
+import pandas as pd
+import sys
+
+# Fields of the loaded .mat files
+# gt_frame = framewise binary ground truth
+# screening_prob_frame = framewise probability predicted
+# gt_pixels = pixelwise #pixels ground truth
+# pred_pixels = pixelwise #pixels predicted
+# tp_gt_pred_pixels = pixelwise #pixels true positive
+
+random_data = loadmat('random.mat')
+vote_data = loadmat('vote.mat')
+mean_data = loadmat('mean.mat')
+combine_25 = loadmat('combine_25.mat')
+combine_50 = loadmat('combine_50.mat')
+combine_75 = loadmat('combine_75.mat')
+
+
+def get_FP_prescreened(dict_label, threshold):
+    # make a boolean mask for specific threshold for prescreening
+    mask = np.zeros(len(dict_label['screening_prob_frame'][0]))
+    mask[dict_label['screening_prob_frame'][0] >= threshold] = 1
+    tn, fp, fn, tp = confusion_matrix(dict_label['gt_frame'][0], mask).ravel()
+    return tn, fp, fn, tp
+
+def get_FP_prescreened_just_seg(dict_label):
+    # make a boolean mask for specific threshold for prescreening
+    mask = np.zeros(len(dict_label['pred_pixels'][0]))
+    mask[dict_label['pred_pixels'][0] > 0] = 1
+    tn, fp, fn, tp = confusion_matrix(dict_label['gt_frame'][0], mask).ravel()
+    return tn, fp, fn, tp
+
+random_data_dice_bce = loadmat('random_dice_bce.mat')
+vote_data_dice_bce = loadmat('vote_dice_bce.mat')
+mean_data_dice_bce = loadmat('mean_dice_bce.mat')
+combine_25_dice_bce = loadmat('combine_25_dice_bce.mat')
+combine_50_dice_bce = loadmat('combine_50_dice_bce.mat')
+combine_75_dice_bce = loadmat('combine_75_dice_bce.mat')
+
+random_data_weighted_bce = loadmat('random_weighted_bce.mat')
+vote_data_weighted_bce = loadmat('vote_weighted_bce.mat')
+mean_data_weighted_bce = loadmat('mean_weighted_bce.mat')
+combine_25_weighted_bce = loadmat('combine_25_weighted_bce.mat')
+combine_50_weighted_bce = loadmat('combine_50_weighted_bce.mat')
+combine_75_weighted_bce = loadmat('combine_75_weighted_bce.mat')
+
+
+index = np.array([0,1,3,5])
+columns = ['random', 'vote', 'mean', 'combine_25', 'combine_50', 'combine_75']
+df_FP = pd.DataFrame(index=range(7), columns=columns)
+df_FN = df_FP.copy()
+
+for ii, data1 in enumerate([random_data, vote_data, mean_data, combine_25, combine_50, combine_75]):
+    for i in range(4):
+        tn, fp, fn, tp = get_FP_prescreened(data1, index[i])
+        df_FP.iloc[np.int(i)][ii] = fp / (fp + tn)
+        df_FN.iloc[np.int(i)][ii] = fn / (fn + tp)
+
+for ii, data1 in enumerate([random_data, vote_data, mean_data, combine_25, combine_50, combine_75]):
+    tn, fp, fn, tp = get_FP_prescreened_just_seg(data1)
+    df_FP.iloc[np.int(4)][ii] = fp / (fp + tn)
+    df_FN.iloc[np.int(4)][ii] = fn / (fn + tp)
+
+for ii, data1 in enumerate([random_data_dice_bce, vote_data_dice_bce, mean_data_dice_bce, combine_25_dice_bce, combine_50_dice_bce, combine_75_dice_bce]):
+    tn, fp, fn, tp = get_FP_prescreened_just_seg(data1)
+    df_FP.iloc[np.int(5)][ii] = fp / (fp + tn)
+    df_FN.iloc[np.int(5)][ii] = fn / (fn + tp)
+
+for ii, data1 in enumerate([random_data_weighted_bce, vote_data_weighted_bce, mean_data_weighted_bce, combine_25_weighted_bce, combine_50_weighted_bce, combine_75_weighted_bce]):
+    tn, fp, fn, tp = get_FP_prescreened_just_seg(data1)
+    df_FP.iloc[np.int(6)][ii] = fp / (fp + tn)
+    df_FN.iloc[np.int(6)][ii] = fn / (fn + tp)
+
+
+fig, axes = plt.subplots(2, 1, figsize=(6,6))
+
+df_FP.plot.bar(rot=0, ax=axes[0], legend=False)
+axes[0].set_xlabel("Threshold values")
+axes[0].set_ylabel("FP rate")
+axes[0].legend(bbox_to_anchor= (0.08, 1.01), ncol=3, title='Label sampling')
+df_FN.plot.bar(rot=0, ax=axes[1], legend=False)
+axes[1].set_xlabel("Threshold values")
+axes[1].set_ylabel("FN rate")
+#handles, labels = axes[0].get_legend_handles_labels()
+#fig.legend(handles, labels, loc="upper center", ncol=3, title='Label sampling')
+fig.tight_layout()
+plt.show()
