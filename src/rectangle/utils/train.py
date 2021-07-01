@@ -21,9 +21,9 @@ class Trainer(nn.Module):
      print_interval=1, val_interval=1, device='cuda',
      early_stop=10, lr_schedule=None, ensemble=None): 
         '''
-        loss_function: can choose between 'dice' or 'dice_bce' or 'wce'
+        loss_function: can choose between 'dice', 'dice_bce', 'wce'
                         * dice: dice loss
-                        * dice_bce: 0.5 * dice loss + 0.5 * binary cross entropy
+                        * dice_bce: 0.5 * dice loss + 0.5 * binary cross entropy 
                         * wbce: weighted cross entropy
         '''
         super().__init__()
