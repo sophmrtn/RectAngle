@@ -12,7 +12,6 @@ import seaborn as sns
 # pred_pixels = pixelwise #pixels predicted
 # tp_gt_pred_pixels = pixelwise #pixels true positive
 
-#plt.fill_between(np.mean()+np.std(), np.mean()-std(), alpha=0.3)
 sns.set_palette(palette='Set2')
 
 random_data = loadmat('random.mat')
@@ -93,6 +92,7 @@ leg = np.array(['Vote', 'Random', 'Mean', 'Combine (25)', 'Combine (50)', 'Combi
 for ii, data1 in enumerate([vote_data, random_data, mean_data, combine_25, combine_50, combine_75]):
     data1 = get_dice(data1)
     data = np.array([])
+    #err = np.array([])
     false_negatives = np.array([])
     for i in thresholds:
         mask = get_boolean_prescreened(data1, i)
@@ -103,12 +103,16 @@ for ii, data1 in enumerate([vote_data, random_data, mean_data, combine_25, combi
             else:
                 subset[i] = True
         # On screened frames including false negatives
+        print((data1['dice'][0] * mask.astype(float))[mask])
+        print(len((data1['dice'][0] * mask.astype(float))[mask]))
         data = np.append(data, np.mean((data1['dice'][0] * mask.astype(float))[mask]))
+        #err = np.append(err, np.std((data1['dice'][0] * mask.astype(float))[mask]))
         # Only frames that get passed classifier
         # data = np.append(data,np.mean((random_data['dice'][0]*mask.astype(float))[mask]))
         # false negatives
         false_negatives = np.append(false_negatives, positive_frames[~mask].sum() / positive_frames.sum())
     plt.plot(thresholds, data, label=leg[ii])
+    #plt.errorbar(thresholds, data, yerr=err)
 # plt.plot(thresholds,false_negatives)
 plt.ylabel("Mean Dice")
 plt.xlabel("Threshold")
