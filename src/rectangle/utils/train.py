@@ -17,20 +17,29 @@ import random
 
 class Trainer(nn.Module):
     def __init__(self, model, nb_epochs=200, outdir='./logs',
-     loss=DiceLoss(), metric=DiceLoss(), opt='adam',
+     loss_function='dice', opt='adam',
      print_interval=1, val_interval=1, device='cuda',
-     early_stop=10, lr_schedule=None, ensemble=None, img_size=403*361): 
-
+     early_stop=10, lr_schedule=None, ensemble=None): 
+        '''
+        loss_function: can choose between 'dice' or 'dice_bce' or 'wce'
+                        * dice: dice loss
+                        * dice_bce: 0.5 * dice loss + 0.5 * binary cross entropy
+                        * wbce: weighted cross entropy
+        '''
         super().__init__()
 
         self.model = model
         self.nb_epochs = nb_epochs
-        # self.loss = loss
-        # self.loss_2 = BCE2d()
-        # self.metric = metric
-        # self.metric_2 = BCE2d()
-        self.loss = WCE2d()
-        self.metric = WCE2d()
+        self.loss_function = loss_function
+        if self.loss_function in ['dice', 'dice_bce']:
+            self.loss = DiceLoss()
+            self.metric = DiceLoss()
+            if self.loss_function == 'dice_bce':
+                self.loss_2 = BCE2d()
+                self.metric_2 = BCE2d()
+        elif self.loss_function == 'wbce':
+            self.loss = WCE2d()
+            self.metric = WCE2d()
         self.print_interval = print_interval
         self.val_interval = val_interval
         self.early_stop = early_stop
@@ -62,7 +71,6 @@ class Trainer(nn.Module):
                 opt = [Adam(model.parameters()) for model in self.model_ensemble]
             else:
                 opt = Adam(model.parameters())
-            # opt = Adam(model.parameters())
 
         self.opt = opt
 
@@ -148,8 +156,10 @@ class Trainer(nn.Module):
                         if train_post:
                             for aug in train_post:
                                 pred = aug(pred)
-                        loss_ = self.loss(pred, label)
-                        # loss_ = 0.5*self.loss(pred, label) + 0.5*self.loss_2(pred.float(), label.float())
+                        if self.loss_function in ['dice', 'wbce']:
+                            loss_ = self.loss(pred, label)
+                        elif self.loss_function == 'dice_bce':
+                            loss_ = 0.5*self.loss(pred, label) + 0.5*self.loss_2(pred.float(), label.float())
                         loss_.backward()
                         opt_.step()
                         loss_epoch.append(loss_.item())
@@ -157,9 +167,9 @@ class Trainer(nn.Module):
                         lr_schedule_.step()
                     loss_log_ensemble[i,epoch] = np.nanmean(loss_epoch)
                     if epoch % self.print_interval == 0:
-                        writer_.add_scalar('train/dice_loss_ensemble', np.nanmean(loss_epoch), epoch)
-                        writer_.add_scalar('train/dice_coefficient_ensemble', 1-np.nanmean(loss_epoch), epoch)
-                        print('Epoch #{}: Mean Dice Loss: {}'.format(epoch, loss_log_ensemble[i,epoch]))
+                        writer_.add_scalar('train/loss_ensemble', np.nanmean(loss_epoch), epoch)
+                        writer_.add_scalar('train/(1-loss)_ensemble', 1-np.nanmean(loss_epoch), epoch)
+                        print('Epoch #{}: Mean Loss: {}'.format(epoch, loss_log_ensemble[i,epoch]))
                     if epoch % self.val_interval == 0:
                         dice_epoch = []
                         model.eval()
@@ -179,15 +189,17 @@ class Trainer(nn.Module):
                                 if val_post:
                                     for aug in val_post:
                                         pred = aug(pred)
-                                dice_metric = self.metric(pred, label)
-                                # dice_metric = 0.5*self.metric(pred, label) + 0.5*self.metric_2(pred.float(), label.float())
+                                if self.loss_function in ['dice', 'wbce']:
+                                    dice_metric = self.metric(pred, label)
+                                elif self.loss_function == 'dice_bce':
+                                    dice_metric = 0.5*self.metric(pred, label) + 0.5*self.metric_2(pred.float(), label.float())
                                 dice_epoch.append(1 - dice_metric.item())
                             dice_log_ensemble[i,int(epoch//self.val_interval)] = np.nanmean(dice_epoch)
                             if lr_schedule_ == 'reduce_on_plateau':
                                 lr_schedule_.step(1-np.nanmean(dice_epoch))
 
-                            writer_.add_scalar('val/dice_coefficient_ensemble', np.nanmean(dice_epoch), epoch)
-                            writer_.add_scalar('val/dice_loss_ensemble', 1-np.nanmean(dice_epoch), epoch)
+                            writer_.add_scalar('val/(1-loss)_ensemble', np.nanmean(dice_epoch), epoch)
+                            writer_.add_scalar('val/loss_ensemble', 1-np.nanmean(dice_epoch), epoch)
 
                             ## show some (e.g.,10) example images in tensorboard
                             ex_num = 10
@@ -216,7 +228,7 @@ class Trainer(nn.Module):
                             else:
                                 early_ += 1
                         if epoch % self.print_interval == 0:
-                            print('Mean Validation Dice: {}'.format(dice_log_ensemble[i,int(epoch//self.val_interval)]))
+                            print('Mean Validation (1-loss): {}'.format(dice_log_ensemble[i,int(epoch//self.val_interval)]))
                 print('Finished training of model #{}'.format(i))
         else:
             loss_log = np.empty(self.nb_epochs)
@@ -256,17 +268,21 @@ class Trainer(nn.Module):
                     if train_post:
                         for aug in train_post:
                             pred = aug(pred)
-                    loss_ = self.loss(pred, label)
+                    if self.loss_function in ['dice', 'wbce']:
+                        loss_ = self.loss(pred, label)
+                    elif self.loss_function == 'dice_bce':
+                        loss_ = 0.5*self.loss(pred, label) + 0.5*self.loss_2(pred.float(), label.float())
                     loss_.backward()
                     self.opt.step()
                     if self.lr_schedule and self.lr_schedule != 'reduce_on_plateau':
                         self.lr_schedule.step()
                     loss_epoch.append(loss_.item())
                 loss_log[epoch] = np.nanmean(loss_epoch)
+                
                 if epoch % self.print_interval == 0:
-                    self.writer.add_scalar('train/dice_loss', np.nanmean(loss_epoch), epoch)
-                    self.writer.add_scalar('train/dice_coefficient', 1-np.nanmean(loss_epoch), epoch)
-                    print('Epoch #{}: Mean Dice Loss: {}'.format(epoch, loss_log[epoch]))
+                    self.writer.add_scalar('train/loss', np.nanmean(loss_epoch), epoch)
+                    self.writer.add_scalar('train/(1-loss)', 1-np.nanmean(loss_epoch), epoch)
+                    print('Epoch #{}: Mean Loss: {}'.format(epoch, loss_log[epoch]))
                 if epoch % self.val_interval == 0:
                     dice_epoch = []
                     model.eval()
@@ -286,14 +302,17 @@ class Trainer(nn.Module):
                             if val_post:
                                 for aug in val_post:
                                     pred = aug(pred)
-                            dice_metric = self.metric(pred, label)
+                            if self.loss_function in ['dice', 'wbce']:
+                                dice_metric = self.metric(pred, label)
+                            elif self.loss_function == 'dice_bce':
+                                dice_metric = 0.5*self.metric(pred, label) + 0.5*self.metric_2(pred.float(), label.float())
                             if self.lr_schedule == 'reduce_on_plateau':
                                 self.lr_schedule.step(dice_metric) # monitors validation loss 
                             dice_epoch.append(1 - dice_metric.item())
                         dice_log[int(epoch//self.val_interval)] = np.nanmean(dice_epoch)
 
-                        self.writer.add_scalar('val/dice_coefficient', np.nanmean(dice_epoch), epoch)
-                        self.writer.add_scalar('val/dice_loss', 1-np.nanmean(dice_epoch), epoch)
+                        self.writer.add_scalar('val/(1-loss)', np.nanmean(dice_epoch), epoch)
+                        self.writer.add_scalar('val/loss', 1-np.nanmean(dice_epoch), epoch)
 
                         ## show some (e.g.,10) example images in tensorboard
                         ex_num = 10
@@ -311,7 +330,7 @@ class Trainer(nn.Module):
                         )
 
                     if epoch % self.print_interval == 0:
-                        print('Mean Validation Dice: {}'.format(dice_log[int(epoch//self.val_interval)]))
+                        print('Mean Validation (1-loss): {}'.format(dice_log[int(epoch//self.val_interval)]))
                     if epoch >= self.val_interval:
                         if dice_log[int(epoch//self.val_interval)] > dice_max:
                             early_ = 0
