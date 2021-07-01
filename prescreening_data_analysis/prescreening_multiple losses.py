@@ -60,16 +60,19 @@ for ii, data1 in enumerate([random_data, vote_data, mean_data, combine_25, combi
         df_FP.iloc[np.int(i)][ii] = fp / (fp + tn)
         df_FN.iloc[np.int(i)][ii] = fn / (fn + tp)
 
+#No screening
 for ii, data1 in enumerate([random_data, vote_data, mean_data, combine_25, combine_50, combine_75]):
     tn, fp, fn, tp = get_FP_prescreened_just_seg(data1)
     df_FP.iloc[np.int(4)][ii] = fp / (fp + tn)
     df_FN.iloc[np.int(4)][ii] = fn / (fn + tp)
 
+#Dice-BCE
 for ii, data1 in enumerate([random_data_dice_bce, vote_data_dice_bce, mean_data_dice_bce, combine_25_dice_bce, combine_50_dice_bce, combine_75_dice_bce]):
     tn, fp, fn, tp = get_FP_prescreened_just_seg(data1)
     df_FP.iloc[np.int(5)][ii] = fp / (fp + tn)
     df_FN.iloc[np.int(5)][ii] = fn / (fn + tp)
 
+#Weighted BCE 
 for ii, data1 in enumerate([random_data_weighted_bce, vote_data_weighted_bce, mean_data_weighted_bce, combine_25_weighted_bce, combine_50_weighted_bce, combine_75_weighted_bce]):
     tn, fp, fn, tp = get_FP_prescreened_just_seg(data1)
     df_FP.iloc[np.int(6)][ii] = fp / (fp + tn)
@@ -79,12 +82,15 @@ for ii, data1 in enumerate([random_data_weighted_bce, vote_data_weighted_bce, me
 fig, axes = plt.subplots(2, 1, figsize=(6,6))
 
 df_FP.plot.bar(rot=0, ax=axes[0], legend=False)
-axes[0].set_xlabel("Threshold values")
+axes[0].set_xlabel("Method")
 axes[0].set_ylabel("FP rate")
-axes[0].legend(bbox_to_anchor= (0.08, 1.01), ncol=3, title='Label sampling')
+axes[0].set_xticklabels(labels = ['T=0', 'T=1', 'T=3', 'T=5', 'DSC', 'DSC-BCE', 'W-BCE'], minor=False)
+axes[0].legend(bbox_to_anchor= (0.9, 1.5), ncol=3, title='Label sampling')
+
 df_FN.plot.bar(rot=0, ax=axes[1], legend=False)
-axes[1].set_xlabel("Threshold values")
+axes[1].set_xlabel("Method")
 axes[1].set_ylabel("FN rate")
+axes[1].set_xticklabels(labels = ['T=0', 'T=1', 'T=3', 'T=5', 'DSC', 'DSC-BCE', 'W-BCE'], minor=False)
 #handles, labels = axes[0].get_legend_handles_labels()
 #fig.legend(handles, labels, loc="upper center", ncol=3, title='Label sampling')
 fig.tight_layout()
