@@ -38,8 +38,24 @@ combine_75_weighted_bce = loadmat('combine_75_weighted_bce.mat')
 def get_dice(dict_label):
     # get dice for all the frames
     dict_label['dice'] = 2 * dict_label['tp_gt_pred_pixels'] / (
-            dict_label['pred_pixels'] + dict_label['gt_pixels'] + 1e-8)
+            dict_label['pred_pixels'] + dict_label['gt_pixels'] + 1e-7)
     return dict_label
+
+"""
+def forward(self, inputs, targets):
+# Assume already in int form - binarise function available
+# Seems to perform very well without binary - soft dice?
+
+    if not self.soft:
+        inputs = BinaryDice(inputs, self.threshold)
+
+    inputs = inputs.view(-1).float()
+    targets = targets.view(-1).float()
+
+    intersection = torch.sum(inputs * targets)
+    dice = ((2. * intersection) + self.eps) / \
+            (torch.sum(inputs) + torch.sum(targets) + self.eps)
+"""
 
 def predicted_negative_prescreened(dict_label, threshold):
     # make a boolean mask for specific threshold for prescreening
@@ -55,29 +71,24 @@ def predicted_negative(dict_label):
     mask2[dict_label['pred_pixels'][0] > 0] = 1
     return mask2.astype(bool)
 
+
 # Pre
-data = random_data
-print('Not prescreened')
-print(np.mean(get_dice(data)['dice'][0][predicted_negative(data)]))
-print(np.median(get_dice(data)['dice'][0][predicted_negative(data)]))
-print(np.std(get_dice(data)['dice'][0][predicted_negative(data)]))
-print('Prescreened t=0')
-theshold = 0
-print(np.mean(get_dice(data)['dice'][0][predicted_negative_prescreened(data,theshold)]))
-print(np.median(get_dice(data)['dice'][0][predicted_negative_prescreened(data,theshold)]))
-print(np.std(get_dice(data)['dice'][0][predicted_negative_prescreened(data,theshold)]))
-print('Prescreened t=1')
-theshold = 1
-print(np.mean(get_dice(data)['dice'][0][predicted_negative_prescreened(data,theshold)]))
-print(np.median(get_dice(data)['dice'][0][predicted_negative_prescreened(data,theshold)]))
-print(np.std(get_dice(data)['dice'][0][predicted_negative_prescreened(data,theshold)]))
-print('Prescreened t=3')
-theshold = 3
-print(np.mean(get_dice(data)['dice'][0][predicted_negative_prescreened(data,theshold)]))
-print(np.median(get_dice(data)['dice'][0][predicted_negative_prescreened(data,theshold)]))
-print(np.std(get_dice(data)['dice'][0][predicted_negative_prescreened(data,theshold)]))
-print('Prescreened t=5')
-theshold = 5
-print(np.mean(get_dice(data)['dice'][0][predicted_negative_prescreened(data,theshold)]))
-print(np.median(get_dice(data)['dice'][0][predicted_negative_prescreened(data,theshold)]))
-print(np.std(get_dice(data)['dice'][0][predicted_negative_prescreened(data,theshold)]))
+names = ['dice', 'weighted-bce', 'dice-bce']
+for idx, data in enumerate([combine_25, combine_25_weighted_bce, combine_25_dice_bce]):
+    print(f'Dice for segmentation : {names[idx]}')
+    mean = np.mean(get_dice(data)['dice'][0][predicted_negative(data)])
+    median = (np.median(get_dice(data)['dice'][0][predicted_negative(data)]))
+    std = (np.std(get_dice(data)['dice'][0][predicted_negative(data)]))
+    print(f'Mean: {mean}, Median: {median}, std: {std}')
+
+print('Chicken')
+data = combine_25
+for threshold in [0,1,3,5]:
+    dice_all = get_dice(data)
+    print(f'Prescreened threshold = {threshold}')
+    mean = (np.mean(dice_all['dice'][0][predicted_negative_prescreened(data,threshold)]))
+    median = (np.median(dice_all['dice'][0][predicted_negative_prescreened(data,threshold)]))
+    std = (np.std(dice_all['dice'][0][predicted_negative_prescreened(data,threshold)]))
+    print(f'Mean: {mean}, Median: {median}, std: {std}')
+
+print('Bubble tea')
