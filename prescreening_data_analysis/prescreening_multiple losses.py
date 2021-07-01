@@ -165,16 +165,17 @@ for ii, data1 in enumerate(
     df_FN_area.iloc[int(6)][ii] = area_FN
 
 
-# fig, axes = plt.subplots(2, 1, figsize=(6, 6))
+# fig, axes = plt.subplots(2, 1)
 #
 # df_FP.plot.bar(rot=0, ax=axes[0], legend=False)
 # # axes[0].set_xlabel("Method")
 # axes[0].set_ylabel("FP rate")
 # axes[0].set_xticklabels(labels=['T=0', 'T=1', 'T=3', 'T=5', 'DSC', 'DSC-BCE', 'W-BCE'], minor=False)
-# axes[0].legend(bbox_to_anchor=(0.9, 1.5), ncol=3, title='Method')
+# axes[0].legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3, ncol=3,
+#                mode="expand", borderaxespad=0.)
 #
 # df_FN.plot.bar(rot=0, ax=axes[1], legend=False)
-# axes[1].set_xlabel("Method")
+# #axes[1].set_xlabel("Method")
 # axes[1].set_ylabel("FN rate")
 # axes[1].set_xticklabels(labels=['T=0', 'T=1', 'T=3', 'T=5', 'DSC', 'DSC-BCE', 'W-BCE'], minor=False)
 # # handles, labels = axes[0].get_legend_handles_labels()
@@ -182,16 +183,16 @@ for ii, data1 in enumerate(
 # fig.tight_layout()
 # plt.show()
 
-fig, axes = plt.subplots(2, 1, figsize=(6, 6))
+fig, axes = plt.subplots(2, 1)
 
 df_FP_area.plot.bar(rot=0, ax=axes[0], legend=False)
 # axes[0].set_xlabel("Method")
 axes[0].set_ylabel("FP area ($mm^2$)")
 axes[0].set_xticklabels(labels=['T=0', 'T=1', 'T=3', 'T=5', 'DSC', 'DSC-BCE', 'W-BCE'], minor=False)
-axes[0].legend(bbox_to_anchor=(0.9, 1.5), ncol=3, title='Method')
-
+axes[0].legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3, ncol=3,
+               mode="expand", borderaxespad=0.)
 df_FN_area.plot.bar(rot=0, ax=axes[1], legend=False)
-axes[1].set_xlabel("Method")
+#axes[1].set_xlabel("Method")
 axes[1].set_ylabel("FN area ($mm^2$)")
 axes[1].set_xticklabels(labels=['T=0', 'T=1', 'T=3', 'T=5', 'DSC', 'DSC-BCE', 'W-BCE'], minor=False)
 # handles, labels = axes[0].get_legend_handles_labels()

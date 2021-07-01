@@ -51,7 +51,10 @@ fig, axes = plt.subplots(2, 1, figsize=(6,6))
 df_FP.plot.bar(rot=0, ax=axes[0], legend=False)
 #axes[0].set_xlabel("Threshold Values")
 axes[0].set_ylabel("FPR")
-axes[0].legend(bbox_to_anchor= (0.08, 1.01), ncol=3, title='Method')
+axbox = axes[0].get_position()
+#axes[0].legend(bbox_to_anchor= (0.08, 1.01), ncol=3, title='Method')
+axes[0].legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3, ncol=3, title='Method',
+               mode="expand", borderaxespad=0.)
 df_FN.plot.bar(rot=0, ax=axes[1], legend=False)
 axes[1].set_xlabel("Threshold")
 axes[1].set_ylabel("FNR")
@@ -85,7 +88,7 @@ def get_boolean_prescreened(dict_label, threshold):
 ## Dice on all frames for different thresholds
 # random_data = get_dice(random_data)
 mask = get_boolean_prescreened(random_data, 1)
-plt.figure(figsize=(6, 6))
+plt.figure()
 data = np.array([])
 false_negatives = np.array([])
 thresholds = np.linspace(0, 5, 100)
@@ -94,7 +97,7 @@ leg = np.array(['Vote', 'Random', 'Mean', 'Combine (25%)', 'Combine (50%)', 'Com
 for ii, data1 in enumerate([vote_data, random_data, mean_data, combine_25, combine_50, combine_75]):
     data1 = get_dice(data1)
     data = np.array([])
-    #err = np.array([])
+    err = np.array([])
     false_negatives = np.array([])
     for i in thresholds:
         mask = get_boolean_prescreened(data1, i)
@@ -106,18 +109,19 @@ for ii, data1 in enumerate([vote_data, random_data, mean_data, combine_25, combi
                 subset[i] = True
         # On screened frames including false negatives
         data = np.append(data, np.mean((data1['dice'][0] * mask.astype(float))[mask]))
-        #err = np.append(err, np.std((data1['dice'][0] * mask.astype(float))[mask]))
+        err = np.append(err, np.std((data1['dice'][0] * mask.astype(float))[mask]))
         # Only frames that get passed classifier
         # data = np.append(data,np.mean((random_data['dice'][0]*mask.astype(float))[mask]))
         # false negatives
         false_negatives = np.append(false_negatives, positive_frames[~mask].sum() / positive_frames.sum())
     plt.plot(thresholds, data, label=leg[ii])
     #plt.errorbar(thresholds, data, yerr=err)
+    #plt.fill_between(thresholds, data+err, data-err, alpha = 0.1)
 # plt.plot(thresholds,false_negatives)
 plt.ylabel("Mean Dice")
 #plt.ylim(0)
 plt.xlabel("Threshold")
-plt.legend(title="Method")
+plt.legend()
 plt.tight_layout()
 
 ## Histogram of false positive pixels on negative frames
@@ -125,7 +129,8 @@ combine_25 = get_dice(combine_25)
 # SET THRESHOLD
 thresh = 5
 mask = get_boolean_prescreened(combine_25, thresh)
-plt.figure(figsize=(6, 6))
+#plt.figure(figsize=(6, 6))
+plt.figure()
 # Non-pre-screen
 preds = np.copy(combine_25['pred_pixels'][0])
 preds[preds > 0] = 1
