@@ -54,7 +54,7 @@ def predicted_negative(dict_label):
     return mask2.astype(bool)
 
 names = ['dice', 'weighted-bce', 'dice-bce']
-for idx, data in enumerate([combine_25, combine_25_weighted_bce, combine_25_dice_bce]):
+for idx, data in enumerate([vote_data, vote_data_weighted_bce, vote_data_dice_bce]):
     print(f'Dice for segmentation : {names[idx]}')
     mean = np.mean(get_dice(data)['dice'][0][predicted_negative(data)])
     median = (np.median(get_dice(data)['dice'][0][predicted_negative(data)]))
@@ -62,7 +62,7 @@ for idx, data in enumerate([combine_25, combine_25_weighted_bce, combine_25_dice
     print(f'Mean: {mean}, Median: {median}, std: {std}')
 
 print('Chicken')
-data = combine_25
+data =vote_data
 for threshold in [0,1,3,5]:
     dice_all = get_dice(data)
     print(f'Prescreened threshold = {threshold}')
