@@ -125,29 +125,31 @@ plt.legend()
 plt.tight_layout()
 
 ## Histogram of false positive pixels on negative frames
-combine_25 = get_dice(combine_25)
+mean_data = get_dice(mean_data)
 # SET THRESHOLD
 thresh = 5
-mask = get_boolean_prescreened(combine_25, thresh)
+mask = get_boolean_prescreened(mean_data, thresh)
 #plt.figure(figsize=(6, 6))
 plt.figure()
 # Non-pre-screen
-preds = np.copy(combine_25['pred_pixels'][0])
+preds = np.copy(mean_data['pred_pixels'][0])
 preds[preds > 0] = 1
-data = combine_25['pred_pixels'][0][negative_frames * preds.astype(bool)]
+data = mean_data['pred_pixels'][0][negative_frames * preds.astype(bool)]
 pixel_area = 0.177994000000000*0.161290000000000  # mm^2
 data *= pixel_area
+print(np.max(data))
 
-bin_ranges = np.linspace(0, 1791, 11)  # 1791 is the maximal FP pixel count for combine_25
+bin_ranges = np.linspace(0, 919, 11)  # 919 is the maximal FP pixel area for mean_data
 plt.hist(data, bins=bin_ranges, color="tab:blue", edgecolor='black', label="none")
 
 # Get pre-screened
 color_list = ['tab:orange', 'tab:green', 'tab:red', 'tab:purple', 'tab:brown', 'tab:pink']
 # 'tab:gray', 'tab:olive', 'tab:cyan', 'navy', 'bisque']
 for i in np.linspace(0, 5, 6):
-    mask = get_boolean_prescreened(combine_25, i)
-    data = (combine_25['pred_pixels'][0] * mask.astype(float))[negative_frames * mask]
+    mask = get_boolean_prescreened(mean_data, i)
+    data = (mean_data['pred_pixels'][0] * mask.astype(float))[negative_frames * mask]
     data *= pixel_area
+    print(np.max(data))
     plt.hist(data, bins=bin_ranges, color=color_list[np.int(i)], edgecolor='black',
              label="{}".format(i))
 plt.xlabel("Area of FP pixels per negative segmented frame ($mm^2$)")
