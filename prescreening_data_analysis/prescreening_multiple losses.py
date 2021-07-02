@@ -183,19 +183,76 @@ for ii, data1 in enumerate(
 # fig.tight_layout()
 # plt.show()
 
-fig, axes = plt.subplots(2, 1)
+# fig, axes = plt.subplots(2, 1)
+#
+# df_FP_area.plot.bar(rot=0, ax=axes[0], legend=False)
+# # axes[0].set_xlabel("Method")
+# axes[0].set_ylabel("FP area ($mm^2$)")
+# axes[0].set_xticklabels(labels=['T=0', 'T=1', 'T=3', 'T=5', 'DSC', 'DSC-BCE', 'W-BCE'], minor=False)
+# axes[0].legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3, ncol=3,
+#                mode="expand", borderaxespad=0.)
+# df_FN_area.plot.bar(rot=0, ax=axes[1], legend=False)
+# #axes[1].set_xlabel("Method")
+# axes[1].set_ylabel("FN area ($mm^2$)")
+# axes[1].set_xticklabels(labels=['T=0', 'T=1', 'T=3', 'T=5', 'DSC', 'DSC-BCE', 'W-BCE'], minor=False)
+# # handles, labels = axes[0].get_legend_handles_labels()
+# # fig.legend(handles, labels, loc="upper center", ncol=3, title='Label sampling')
+# fig.tight_layout()
+# plt.show()
 
-df_FP_area.plot.bar(rot=0, ax=axes[0], legend=False)
+fig, axes = plt.subplots(2, 2)
+
+axs = axes[0,0]
+df_FP.plot.bar(ax=axs, legend=False)
+axs.axvline(x=3.5, ymin=0, ymax=1, linestyle='--', color="k")
 # axes[0].set_xlabel("Method")
-axes[0].set_ylabel("FP area ($mm^2$)")
-axes[0].set_xticklabels(labels=['T=0', 'T=1', 'T=3', 'T=5', 'DSC', 'DSC-BCE', 'W-BCE'], minor=False)
-axes[0].legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3, ncol=3,
-               mode="expand", borderaxespad=0.)
-df_FN_area.plot.bar(rot=0, ax=axes[1], legend=False)
+axs.set_ylabel("FP rate")
+# axs.tick_params(
+#     axis='x',          # changes apply to the x-axis
+#     which='both',      # both major and minor ticks are affected
+#     bottom=False,      # ticks along the bottom edge are off
+#     top=False,         # ticks along the top edge are off
+#     labelbottom=False)
+axs.set_xticklabels(labels=['T=0', 'T=1', 'T=3', 'T=5', 'DICE', 'DICE-BCE', 'W-BCE'], minor=False)
+# axs.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3, ncol=3,
+#                mode="expand", borderaxespad=0.)
+
+axs = axes[1,0]
+df_FN.plot.bar(ax=axs, legend=False)
+axs.axvline(x=3.5, ymin=0, ymax=1, linestyle='--', color="k")
 #axes[1].set_xlabel("Method")
-axes[1].set_ylabel("FN area ($mm^2$)")
-axes[1].set_xticklabels(labels=['T=0', 'T=1', 'T=3', 'T=5', 'DSC', 'DSC-BCE', 'W-BCE'], minor=False)
+axs.set_ylabel("FN rate")
+axs.set_xticklabels(labels=['T=0', 'T=1', 'T=3', 'T=5', 'DICE', 'DICE-BCE', 'W-BCE'], minor=False)
 # handles, labels = axes[0].get_legend_handles_labels()
 # fig.legend(handles, labels, loc="upper center", ncol=3, title='Label sampling')
+
+
+axs = axes[0,1]
+
+df_FP_area.plot.bar(ax=axs, legend=False)
+axs.axvline(x=3.5, ymin=0, ymax=1, linestyle='--', color="k")
+# axes[0].set_xlabel("Method")
+axs.set_ylabel("FP area ($mm^2$)")
+# axs.tick_params(
+#     axis='x',          # changes apply to the x-axis
+#     which='both',      # both major and minor ticks are affected
+#     bottom=False,      # ticks along the bottom edge are off
+#     top=False,         # ticks along the top edge are off
+#     labelbottom=False)
+axs.set_xticklabels(labels=['T=0', 'T=1', 'T=3', 'T=5', 'DICE', 'DICE-BCE', 'W-BCE'], minor=False)
+#axs.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3, ncol=3,
+#               mode="expand", borderaxespad=0.)
+
+axs = axes[1,1]
+df_FN_area.plot.bar(ax=axs, legend=False)
+axs.axvline(x=3.5, ymin=0, ymax=1, linestyle='--', color="k")
+#axes[1].set_xlabel("Method")
+axs.set_ylabel("FN area ($mm^2$)")
+axs.set_xticklabels(labels=['T=0', 'T=1', 'T=3', 'T=5', 'DICE', 'DICE-BCE', 'W-BCE'], minor=False)
+handles, labels = axes[0,0].get_legend_handles_labels()
+fig.legend(handles, labels, loc="upper center", ncol=3,bbox_to_anchor=(0.04, 1.02, 1., .102), borderaxespad=0.)
+#legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3, ncol=3,
+#               mode="expand", borderaxespad=0.)
 fig.tight_layout()
+plt.savefig("output.png", bbox_inches="tight")
 plt.show()
