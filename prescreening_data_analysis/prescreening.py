@@ -46,7 +46,7 @@ for ii, data1 in enumerate([vote_data, random_data, mean_data, combine_25, combi
 print(df_FP)
 print(df_FN)
 
-fig, axes = plt.subplots(2, 1, figsize=(6,6))
+fig, axes = plt.subplots(2, 1, figsize=(10,8))
 
 df_FP.plot.bar(rot=0, ax=axes[0], legend=False)
 #axes[0].set_xlabel("Threshold Values")
@@ -94,6 +94,7 @@ false_negatives = np.array([])
 thresholds = np.linspace(0, 5, 100)
 leg = np.array(['Vote', 'Random', 'Mean', 'Combine (25%)', 'Combine (50%)', 'Combine (75%)'])
 
+fig = plt.figure(figsize=(10, 8))
 for ii, data1 in enumerate([vote_data, random_data, mean_data, combine_25, combine_50, combine_75]):
     data1 = get_dice(data1)
     data = np.array([])
