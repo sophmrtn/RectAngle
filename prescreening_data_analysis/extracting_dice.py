@@ -3,7 +3,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.metrics import confusion_matrix
 import pandas as pd
-import seaborn as sns
 
 # Fields of the loaded .mat files
 # gt_frame = framewise binary ground truth
@@ -12,7 +11,6 @@ import seaborn as sns
 # pred_pixels = pixelwise #pixels predicted
 # tp_gt_pred_pixels = pixelwise #pixels true positive
 
-sns.set_palette(palette='Set2')
 
 random_data = loadmat('random.mat')
 vote_data = loadmat('vote.mat')
@@ -41,22 +39,6 @@ def get_dice(dict_label):
             dict_label['pred_pixels'] + dict_label['gt_pixels'] + 1e-7)
     return dict_label
 
-"""
-def forward(self, inputs, targets):
-# Assume already in int form - binarise function available
-# Seems to perform very well without binary - soft dice?
-
-    if not self.soft:
-        inputs = BinaryDice(inputs, self.threshold)
-
-    inputs = inputs.view(-1).float()
-    targets = targets.view(-1).float()
-
-    intersection = torch.sum(inputs * targets)
-    dice = ((2. * intersection) + self.eps) / \
-            (torch.sum(inputs) + torch.sum(targets) + self.eps)
-"""
-
 def predicted_negative_prescreened(dict_label, threshold):
     # make a boolean mask for specific threshold for prescreening
     mask = np.zeros(len(dict_label['screening_prob_frame'][0]))
@@ -71,8 +53,6 @@ def predicted_negative(dict_label):
     mask2[dict_label['pred_pixels'][0] > 0] = 1
     return mask2.astype(bool)
 
-
-# Pre
 names = ['dice', 'weighted-bce', 'dice-bce']
 for idx, data in enumerate([combine_25, combine_25_weighted_bce, combine_25_dice_bce]):
     print(f'Dice for segmentation : {names[idx]}')
